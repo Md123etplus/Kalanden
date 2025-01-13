@@ -62,3 +62,13 @@ export async function getImageUrl(bucketId: string, imageId: string): Promise<st
   }
 }
 
+
+export async function getFilePreview(bucketId: string, fileId: string): Promise<string> {
+  try {
+    const result = await storage.getFilePreview(bucketId, fileId);
+    return result;
+  } catch (error) {
+    console.error('Error getting file preview:', error);
+    throw error;
+  }
+}

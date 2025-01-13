@@ -53,7 +53,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
         })
         if (course.imageFileId) {
           const imageUrl = await storage.getFileView(STORAGE_BUCKET_ID, course.imageFileId)
-          setCourseImagePreview(imageUrl.href)
+          setCourseImagePreview(imageUrl)
         }
       } catch (error) {
         console.error('Error fetching course:', error)

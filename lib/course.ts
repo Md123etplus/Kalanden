@@ -30,7 +30,7 @@ export async function createCourse(courseData: Omit<Course, '$id' | 'createdAt' 
             updatedAt: new Date().toISOString(),
         }
     );
-    return course as Course;
+    return course as unknown as Course;
 }
 
 export async function getCourseById(courseId: string): Promise<Course | null> {
@@ -40,7 +40,7 @@ export async function getCourseById(courseId: string): Promise<Course | null> {
             COURSES_COLLECTION_ID,
             courseId
         );
-        return course as Course;
+        return course as unknown as Course;
     } catch (error) {
         console.error('Error fetching course:', error);
         return null;
@@ -57,7 +57,7 @@ export async function updateCourse(courseId: string, updates: Partial<Course>): 
             updatedAt: new Date().toISOString(),
         }
     );
-    return updatedCourse as Course;
+    return updatedCourse as unknown as Course;
 }
 
 export async function deleteCourse(courseId: string): Promise<void> {

@@ -1,3 +1,4 @@
+"use client"
 import React from 'react'
 import { Header } from '@/components/header'
 import { Button } from '@/components/ui/button'
@@ -13,20 +14,48 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { databases, DATABASE_ID, COURSES_COLLECTION_ID } from '@/lib/appwrite'
 import { Query } from 'appwrite'
-import { getImageUrl ,BUCKET_ID, IMAGE_ID } from '@/lib/appwrite'; // Import necessary functions and constants
+import { getFilePreview,BUCKET_ID, IMAGE_ID } from '@/lib/appwrite'
 
+interface Course {
+  $id: string;
+  title: string;
+  description: string;
+  level: string;
+  image?: string;
+  price: number;
+  enrolledStudents?: number;
+  imageFileId?: string;
+}
 
-const popularCourses = [
-  { id: 1, title: 'Mathématiques', description: 'Cours de base en algèbre et géométrie', level: '7ième Année', image: '/placeholder.svg?height=100&width=200', price: 0 },
-  { id: 2, title: 'Physique', description: 'Introduction à la mécanique et à l\'électricité', level: '10ième Année', image: '/placeholder.svg?height=100&width=200', price: 5000 },
-  { id: 3, title: 'Anglais', description: 'Amélioration des compétences en lecture, écriture et conversation', level: '8ième Année', image: '/placeholder.svg?height=100&width=200', price: 0 },
-]
+// Appwrite file IDs for the section images
+const STUDENT_IMAGE_ID = '677dc861000e70ec2a15'
+const INSTRUCTOR_IMAGE_ID = '67674c1200010784cf7a'
+const PARENT_IMAGE_ID = '6771faf700129f3f59ff'
+const HERO_IMAGE_ID = IMAGE_ID
 
 export default async function Home() {
-  let popularCourses: any[] = []
-  let imageUrl = '/placeholder.svg?height=300&width=400' // Default placeholder
+  let popularCourses: Course[] = []
+  let studentImageUrl = '/placeholder.svg?height=150&width=200'
+  let instructorImageUrl = '/placeholder.svg?height=150&width=200'
+  let parentImageUrl = '/placeholder.svg?height=150&width=200'
+  let heroImageUrl = '/placeholder.svg?height=300&width=400'
+  const isNightMode = false; // Define the isNightMode variable
 
   try {
+    // Fetch section images
+    const [heroImage, studentImage, instructorImage, parentImage] = await Promise.all([
+      getFilePreview(BUCKET_ID, HERO_IMAGE_ID),
+      getFilePreview(BUCKET_ID, STUDENT_IMAGE_ID),
+      getFilePreview(BUCKET_ID, INSTRUCTOR_IMAGE_ID),
+      getFilePreview(BUCKET_ID, PARENT_IMAGE_ID)
+    ]);
+
+    heroImageUrl = heroImage || heroImageUrl;
+    studentImageUrl = studentImage || studentImageUrl;
+    instructorImageUrl = instructorImage || instructorImageUrl;
+    parentImageUrl = parentImage || parentImageUrl;
+
+    // Fetch popular courses
     const response = await databases.listDocuments(
       DATABASE_ID,
       COURSES_COLLECTION_ID,
@@ -35,10 +64,21 @@ export default async function Home() {
         Query.limit(3)
       ]
     )
-    popularCourses = response.documents
+    popularCourses = response.documents as unknown as Course[]
 
-    // Fetch the image URL
-    imageUrl = await getImageUrl(BUCKET_ID, IMAGE_ID)
+    // Fetch image URLs for courses
+    popularCourses = await Promise.all(popularCourses.map(async (course) => {
+      if (course.imageFileId) {
+        try {
+          const courseImageUrl = await getFilePreview(BUCKET_ID, course.imageFileId);
+          return { ...course, image: courseImageUrl };
+        } catch (error) {
+          console.error(`Error fetching image for course ${course.$id}:`, error);
+          return course;
+        }
+      }
+      return course;
+    }));
   } catch (error) {
     console.error('Error fetching data:', error)
   }
@@ -50,7 +90,7 @@ export default async function Home() {
         <section className="flex flex-col md:flex-row items-center justify-center mb-16 py-8 px-4 md:px-12">
           <div className="md:w-1/2 mb-8 md:mb-0 md:order-2 flex justify-center">
             <Image 
-              src={imageUrl} 
+              src={heroImageUrl} 
               alt="Élèves maliens" 
               width={400} 
               height={300} 
@@ -63,6 +103,7 @@ export default async function Home() {
               La plateforme éducative en ligne qui révolutionne l'apprentissage au Mali.
               Accédez à des ressources pédagogiques de qualité, où que vous soyez, quand vous le souhaitez, en toute simplicité.
             </p>
+            
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Link href="/courses">
                 <Button size="lg" className="w-full sm:w-auto">Commencer à apprendre</Button>
@@ -74,10 +115,17 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* Le reste du contenu reste inchangé */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 py-8">
           <div className="bg-primary/10 p-8 rounded-lg flex flex-col h-full">
-            <Image src="/placeholder.svg?height=150&width=200" alt="Étudiants" width={200} height={150} className="mb-4 rounded-lg" />
+            <div className="w-full h-40 mb-4 rounded-lg overflow-hidden">
+              <Image 
+                src={studentImageUrl}
+                alt="Étudiants" 
+                width={200} 
+                height={150} 
+                className="w-full h-full object-cover"
+              />
+            </div>
             <h2 className="text-2xl font-semibold mb-4">Pour les étudiants</h2>
             <p className="mb-4 flex-grow">Accédez à une variété de cours et de ressources pour améliorer votre éducation.</p>
             <div className="mt-auto">
@@ -87,7 +135,15 @@ export default async function Home() {
             </div>
           </div>
           <div className="bg-secondary/10 p-8 rounded-lg flex flex-col h-full">
-            <Image src="/placeholder.svg?height=150&width=200" alt="Instructeurs" width={200} height={150} className="mb-4 rounded-lg" />
+            <div className="w-full h-40 mb-4 rounded-lg overflow-hidden">
+              <Image 
+                src={instructorImageUrl}
+                alt="Instructeurs" 
+                width={200} 
+                height={150} 
+                className="w-full h-full object-cover"
+              />
+            </div>
             <h2 className="text-2xl font-semibold mb-4">Pour les instructeurs</h2>
             <p className="mb-4 flex-grow">Partagez vos connaissances, enseignez aux étudiants maliens et gagnez un revenu supplémentaire.</p>
             <div className="mt-auto">
@@ -97,7 +153,15 @@ export default async function Home() {
             </div>
           </div>
           <div className="bg-accent/10 p-8 rounded-lg flex flex-col h-full">
-            <Image src="/placeholder.svg?height=150&width=200" alt="Parents" width={200} height={150} className="mb-4 rounded-lg" />
+            <div className="w-full h-40 mb-4 rounded-lg overflow-hidden">
+              <Image 
+                src={parentImageUrl}
+                alt="Parents" 
+                width={200} 
+                height={150} 
+                className="w-full h-full object-cover"
+              />
+            </div>
             <h2 className="text-2xl font-semibold mb-4">Pour les parents</h2>
             <p className="mb-4 flex-grow">Suivez les performances de vos enfants et participez activement à leur éducation.</p>
             <div className="mt-auto">
@@ -114,7 +178,13 @@ export default async function Home() {
             {popularCourses.map((course) => (
               <Card key={course.$id}>
                 <CardHeader>
-                  <Image src={course.image || '/placeholder.svg?height=100&width=200'} alt={course.title} width={200} height={100} className="w-full rounded-t-lg" />
+                  <Image 
+                    src={course.image || '/placeholder.svg?height=100&width=200'} 
+                    alt={course.title} 
+                    width={200} 
+                    height={100} 
+                    className="w-full h-40 object-cover rounded-t-lg" 
+                  />
                 </CardHeader>
                 <CardContent>
                   <CardTitle>{course.title}</CardTitle>
@@ -130,7 +200,65 @@ export default async function Home() {
             ))}
           </div>
         </section>
-
+        
+        <section className={`mb-16 py-8 ${isNightMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+          <h2 className="text-3xl font-bold mb-8 text-center">Enseignants populaires</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                id: 1,
+                name: 'Dr. Fatoumata Diarra',
+                location: 'Bamako, Mali',
+                stars: 4.8,
+                courses: 12,
+                image: parentImageUrl,
+              },
+              {
+                id: 2,
+                name: 'M. Adama Traoré',
+                location: 'Sikasso, Mali',
+                stars: 4.5,
+                courses: 8,
+                image: parentImageUrl,
+              },
+              {
+                id: 3,
+                name: 'Mme Aïssata Konaté',
+                location: 'Kayes, Mali',
+                stars: 4.7,
+                courses: 10,
+                image: parentImageUrl,
+              },
+            ].map((teacher) => (
+              <div key={teacher.id} className={`bg-${isNightMode ? 'gray-800' : 'white'} rounded-lg shadow-lg p-4 flex flex-col items-center`}>
+                <Image
+                  src={teacher.image}
+                  alt={teacher.name}
+                  width={100}
+                  height={100}
+                  className="w-24 h-24 object-cover rounded-full mb-4"
+                />
+                <h3 className="text-xl font-bold mb-2">{teacher.name}</h3>
+                <p className="text-sm text-gray-600 mb-2">{teacher.location}</p>
+                <p className="text-yellow-500 mb-2">{'★'.repeat(Math.round(teacher.stars))}{'☆'.repeat(5 - Math.round(teacher.stars))}</p>
+                <p className="text-sm text-gray-600 mb-4">Cours créés: {teacher.courses}</p>
+                <div className="flex space-x-4">
+                  <Button variant="default" className="bg-blue-500 text-white px-4 py-2 rounded-lg">
+                    Voir Profil
+                  </Button>
+                  <Button variant="secondary" className="bg-green-500 text-white px-4 py-2 rounded-lg">
+                    Prendre Contact
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-right mt-4">
+            <Button variant="secondary" className="bg-blue-500 text-white px-4 py-2 rounded-lg">
+              Voir plus d'enseignants
+            </Button>
+          </div>
+        </section>
         <section className="flex flex-col md:flex-row items-center justify-between mb-16 py-8 px-8 bg-accent/10 rounded-lg">
           <div className="md:w-1/3 flex justify-center mb-8 md:mb-0 md:order-2">
             <SmallAfricanStudentsSvg />
@@ -140,6 +268,8 @@ export default async function Home() {
             <p className="text-xl mb-8">Offrir une éducation de qualité à tous les Maliens, où qu'ils soient et quelles que soient les conditions.</p>
           </div>
         </section>
+
+
 
         <section className="bg-primary/5 p-8 rounded-lg mb-16">
           <h2 className="text-2xl font-bold mb-4 text-center">Pourquoi choisir Kalandén ?</h2>

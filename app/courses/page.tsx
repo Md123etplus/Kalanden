@@ -1,3 +1,4 @@
+// "use client"
 import { databases, DATABASE_ID, COURSES_COLLECTION_ID } from '@/lib/appwrite'
 import { Query } from 'appwrite'
 import { CourseList } from './CourseList'

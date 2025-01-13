@@ -1,5 +1,5 @@
 import { databases, DATABASE_ID, MESSAGES_COLLECTION_ID } from './appwrite';
-import { ID } from 'appwrite';
+import { ID, Query } from 'appwrite';
 
 export interface Message {
     $id: string;
@@ -19,7 +19,7 @@ export async function createMessage(messageData: Omit<Message, '$id' | 'createdA
             createdAt: new Date().toISOString(),
         }
     );
-    return message as Message;
+    return message as unknown as Message;
 }
 
 export async function getMessagesByCourseId(courseId: string): Promise<Message[]> {
@@ -28,7 +28,7 @@ export async function getMessagesByCourseId(courseId: string): Promise<Message[]
         MESSAGES_COLLECTION_ID,
         [Query.equal('courseId', courseId)]
     );
-    return messages.documents as Message[];
+    return messages.documents as unknown as Message[];
 }
 
 export async function deleteMessage(messageId: string): Promise<void> {
