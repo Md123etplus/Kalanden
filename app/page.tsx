@@ -1,10 +1,10 @@
-"use client"
 import React from 'react'
 import { Header } from '@/components/header'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import Image from 'next/image'
 import { EducationalIllustration, SmallAfricanStudentsSvg } from '@/components/illustrations'
+import PopularInstructorsSection from '@/components/PopularInstructorsSection'
 import {
   Accordion,
   AccordionContent,
@@ -12,9 +12,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { databases, DATABASE_ID, COURSES_COLLECTION_ID } from '@/lib/appwrite'
+import { databases, DATABASE_ID, COURSES_COLLECTION_ID, USERS_COLLECTION_ID, INSTRUCTOR_RATINGS_COLLECTION_ID } from '@/lib/appwrite'
 import { Query } from 'appwrite'
-import { getFilePreview,BUCKET_ID, IMAGE_ID } from '@/lib/appwrite'
+import { getFilePreview, BUCKET_ID, IMAGE_ID } from '@/lib/appwrite'
 
 interface Course {
   $id: string;
@@ -27,11 +27,22 @@ interface Course {
   imageFileId?: string;
 }
 
+interface Instructor {
+  $id: string;
+  name: string;
+  location: string;
+  profileImageId?: string;
+  likes: number;
+  coursesCreated: number;
+}
+
 // Appwrite file IDs for the section images
 const STUDENT_IMAGE_ID = '677dc861000e70ec2a15'
 const INSTRUCTOR_IMAGE_ID = '67674c1200010784cf7a'
 const PARENT_IMAGE_ID = '6771faf700129f3f59ff'
 const HERO_IMAGE_ID = IMAGE_ID
+
+
 
 export default async function Home() {
   let popularCourses: Course[] = []
@@ -39,7 +50,6 @@ export default async function Home() {
   let instructorImageUrl = '/placeholder.svg?height=150&width=200'
   let parentImageUrl = '/placeholder.svg?height=150&width=200'
   let heroImageUrl = '/placeholder.svg?height=300&width=400'
-  const isNightMode = false; // Define the isNightMode variable
 
   try {
     // Fetch section images
@@ -83,10 +93,13 @@ export default async function Home() {
     console.error('Error fetching data:', error)
   }
 
+  // const popularInstructors = await getPopularInstructors()
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
+        {/* Hero section */}
         <section className="flex flex-col md:flex-row items-center justify-center mb-16 py-8 px-4 md:px-12">
           <div className="md:w-1/2 mb-8 md:mb-0 md:order-2 flex justify-center">
             <Image 
@@ -103,7 +116,6 @@ export default async function Home() {
               La plateforme éducative en ligne qui révolutionne l'apprentissage au Mali.
               Accédez à des ressources pédagogiques de qualité, où que vous soyez, quand vous le souhaitez, en toute simplicité.
             </p>
-            
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
               <Link href="/courses">
                 <Button size="lg" className="w-full sm:w-auto">Commencer à apprendre</Button>
@@ -115,6 +127,7 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* User types section */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 py-8">
           <div className="bg-primary/10 p-8 rounded-lg flex flex-col h-full">
             <div className="w-full h-40 mb-4 rounded-lg overflow-hidden">
@@ -172,6 +185,7 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* Popular courses section */}
         <section className="mb-16 py-8">
           <h2 className="text-3xl font-bold mb-8 text-center">Cours populaires</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -201,64 +215,10 @@ export default async function Home() {
           </div>
         </section>
         
-        <section className={`mb-16 py-8 ${isNightMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
-          <h2 className="text-3xl font-bold mb-8 text-center">Enseignants populaires</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                id: 1,
-                name: 'Dr. Fatoumata Diarra',
-                location: 'Bamako, Mali',
-                stars: 4.8,
-                courses: 12,
-                image: parentImageUrl,
-              },
-              {
-                id: 2,
-                name: 'M. Adama Traoré',
-                location: 'Sikasso, Mali',
-                stars: 4.5,
-                courses: 8,
-                image: parentImageUrl,
-              },
-              {
-                id: 3,
-                name: 'Mme Aïssata Konaté',
-                location: 'Kayes, Mali',
-                stars: 4.7,
-                courses: 10,
-                image: parentImageUrl,
-              },
-            ].map((teacher) => (
-              <div key={teacher.id} className={`bg-${isNightMode ? 'gray-800' : 'white'} rounded-lg shadow-lg p-4 flex flex-col items-center`}>
-                <Image
-                  src={teacher.image}
-                  alt={teacher.name}
-                  width={100}
-                  height={100}
-                  className="w-24 h-24 object-cover rounded-full mb-4"
-                />
-                <h3 className="text-xl font-bold mb-2">{teacher.name}</h3>
-                <p className="text-sm text-gray-600 mb-2">{teacher.location}</p>
-                <p className="text-yellow-500 mb-2">{'★'.repeat(Math.round(teacher.stars))}{'☆'.repeat(5 - Math.round(teacher.stars))}</p>
-                <p className="text-sm text-gray-600 mb-4">Cours créés: {teacher.courses}</p>
-                <div className="flex space-x-4">
-                  <Button variant="default" className="bg-blue-500 text-white px-4 py-2 rounded-lg">
-                    Voir Profil
-                  </Button>
-                  <Button variant="secondary" className="bg-green-500 text-white px-4 py-2 rounded-lg">
-                    Prendre Contact
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="text-right mt-4">
-            <Button variant="secondary" className="bg-blue-500 text-white px-4 py-2 rounded-lg">
-              Voir plus d'enseignants
-            </Button>
-          </div>
-        </section>
+        {/* Popular instructors section */}
+        <PopularInstructorsSection />
+
+        {/* Mission section */}
         <section className="flex flex-col md:flex-row items-center justify-between mb-16 py-8 px-8 bg-accent/10 rounded-lg">
           <div className="md:w-1/3 flex justify-center mb-8 md:mb-0 md:order-2">
             <SmallAfricanStudentsSvg />
@@ -269,8 +229,7 @@ export default async function Home() {
           </div>
         </section>
 
-
-
+        {/* Why choose Kalandén section */}
         <section className="bg-primary/5 p-8 rounded-lg mb-16">
           <h2 className="text-2xl font-bold mb-4 text-center">Pourquoi choisir Kalandén ?</h2>
           <Accordion type="single" collapsible className="w-full">

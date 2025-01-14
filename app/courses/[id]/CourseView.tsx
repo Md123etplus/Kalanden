@@ -140,6 +140,7 @@ export function CourseView({ initialCourse, courseId }: CourseViewProps) {
     checkAuthentication();
   }, [courseId])
 
+  
   const checkAuthentication = async () => {
     try {
       const user = await getCurrentUser();
@@ -415,7 +416,10 @@ export function CourseView({ initialCourse, courseId }: CourseViewProps) {
                   state.hasPaid ? (
                     <Button 
                       className="w-full" 
-                      onClick={() => router.push(`/courses/${courseId}/content`)}
+                      onClick={() => {
+                        // console.log(`/courses/${courseId}/content`);
+                        router.push(`/courses/${courseId}/content`);
+                      }}
                     >
                       Accéder au contenu du cours
                     </Button>

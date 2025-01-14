@@ -6,16 +6,20 @@ import { Header } from '@/components/header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Image from 'next/image'
-import { Share2, Maximize2, Minimize2, Download } from 'lucide-react'
-import { databases, storage, DATABASE_ID, COURSES_COLLECTION_ID, ENROLLMENTS_COLLECTION_ID, getCurrentUser } from '@/lib/appwrite'
-import { Query } from 'appwrite'
+import { Maximize2, Minimize2, Download, ThumbsUp } from 'lucide-react'
+import { databases, storage, DATABASE_ID, COURSES_COLLECTION_ID, ENROLLMENTS_COLLECTION_ID, USERS_COLLECTION_ID, getCurrentUser } from '@/lib/appwrite'
+import { Query, ID } from 'appwrite'
 import { ErrorDisplay } from '@/components/ui/error'
 import { useToast } from '@/components/use-toast'
 import { Document, Page, pdfjs } from 'react-pdf'
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
-import 'react-pdf/dist/esm/Page/TextLayer.css'
+import { FiMaximize, FiDownload } from 'react-icons/fi'
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+import dynamic from 'next/dynamic'
+
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
+// import 'react-pdf/dist/esm/Page/TextLayer.css'
+import { Quiz } from '@/components/Quiz'
+import { InstructorRating } from '@/components/InstructorRating'
 
 interface Course {
   $id: string;
@@ -34,16 +38,27 @@ interface Course {
   duration: number;
   hasQuizzes: boolean;
   enrolledStudents: number;
+  quizzes?: any[];
 }
+
+interface Instructor {
+  $id: string;
+  name: string;
+  profileImageId?: string;
+  bio?: string;
+}
+
+const INSTRUCTOR_RATINGS_COLLECTION_ID = '678659190000f59e2e7a';
 
 export default function CourseContent({ params }: { params: Promise<{ id: string }> }) {
   const { id: courseId } = use(params)
   const [course, setCourse] = useState<Course | null>(null)
+  const [instructor, setInstructor] = useState<Instructor | null>(null)
+  const [instructorRatings, setInstructorRatings] = useState<number>(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isFullScreen, setIsFullScreen] = useState(false)
   const [courseImageUrl, setCourseImageUrl] = useState<string | null>(null)
-  const [showPdfViewer, setShowPdfViewer] = useState(false)
   const [numPages, setNumPages] = useState<number | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -51,12 +66,18 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
   const { toast } = useToast()
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const { pdfjs } = require('react-pdf')
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.4.456/pdf.worker.min.js`
+    }
+
     const fetchCourse = async () => {
       setIsLoading(true)
       try {
-        const currentUser = await getCurrentUser()
+        const currentUser = await getCurrentUser();
+        console.log("Current User:", currentUser);
         if (!currentUser) {
-          throw new Error('User not authenticated')
+          throw new Error('User not authenticated');
         }
 
         const enrollment = await databases.listDocuments(
@@ -66,38 +87,80 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
             Query.equal('userId', currentUser.$id),
             Query.equal('courseId', courseId)
           ]
-        )
-
+        );
+        console.log("Enrollment Data:", enrollment);
         if (enrollment.documents.length === 0) {
-          throw new Error('User not enrolled in this course')
+          throw new Error('User not enrolled in this course');
         }
 
-        const courseData = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION_ID, courseId)
-        setCourse(courseData as unknown as Course)
-        
+        console.log("COURSES_COLLECTION_ID:", COURSES_COLLECTION_ID);
+        const courseData = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION_ID, courseId);
+        console.log("Course Data:", courseData);
+        setCourse(courseData as unknown as Course);
+
         if (courseData.imageFileId) {
-          const imageUrl = storage.getFileView('6753658f001ce9532ca7', courseData.imageFileId)
-          setCourseImageUrl(imageUrl.toString())
+          console.log("Image File ID:", courseData.imageFileId);
+          const imageUrl = storage.getFileView('6753658f001ce9532ca7', courseData.imageFileId);
+          setCourseImageUrl(imageUrl.toString());
         }
+
         if (courseData.pdfFileId) {
-          const pdfUrl = await storage.getFileView('6753658f001ce9532ca7', courseData.pdfFileId)
-          setPdfUrl(pdfUrl)
+          console.log("PDF File ID:", courseData.pdfFileId);
+          const pdfUrl = await storage.getFileView('6753658f001ce9532ca7', courseData.pdfFileId);
+          setPdfUrl(pdfUrl);
         }
+
+        // Fetch instructor data
+        const instructorData = await databases.getDocument(DATABASE_ID, USERS_COLLECTION_ID, courseData.createdBy);
+        if (instructorData) {
+          setInstructor({
+            $id: instructorData.$id,
+            name: instructorData.name,
+            profileImageId: instructorData.profileImageId,
+            bio: instructorData.bio
+          });
+        } else {
+          console.error("Instructor data not found.");
+          setInstructor(null); // Optional: Handle case when instructor data is missing
+        }
+
       } catch (error) {
-        console.error('Error fetching course:', error)
-        setError('Failed to load course. Please try again.')
+        console.error('Error fetching course:', error);
+        setError('Failed to load course. Please try again.');
         toast({
           title: "Erreur",
           description: "Impossible de charger le contenu du cours. Veuillez réessayer.",
           variant: "destructive",
-        })
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchCourse()
-  }, [courseId, toast])
+    fetchCourse();
+  }, [courseId, toast]);
+
+  useEffect(() => {
+    // Fetch instructor ratings once instructor data is available
+    const fetchInstructorRatings = async () => {
+      if (instructor) {
+        try {
+          const ratingsResponse = await databases.listDocuments(
+            DATABASE_ID,
+            INSTRUCTOR_RATINGS_COLLECTION_ID,
+            [Query.equal('instructorId', instructor.$id)]
+          );
+          console.log("Instructor Ratings:", ratingsResponse);
+          setInstructorRatings(ratingsResponse.documents.length);
+        } catch (error) {
+          console.error("Error fetching instructor ratings:", error);
+        }
+      }
+    };
+
+    fetchInstructorRatings();
+  }, [instructor]); // This effect depends on `instructor`
+  
 
   const toggleFullScreen = () => {
     setIsFullScreen(!isFullScreen)
@@ -109,10 +172,6 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber)
-  }
-
-  const togglePdfViewer = () => {
-    setShowPdfViewer(!showPdfViewer)
   }
 
   const handleDownloadPdf = async () => {
@@ -127,6 +186,76 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
       toast({
         title: "Erreur",
         description: "Le document PDF n'est pas disponible pour le téléchargement.",
+        variant: "destructive",
+      })
+    }
+  }
+  const handleFullscreen = async () => {
+    const pdfContainer = document.getElementById('pdf-container');
+  if (pdfContainer) {
+    // If the browser supports fullscreen API
+    if (pdfContainer.requestFullscreen) {
+      pdfContainer.requestFullscreen();
+    } else if (pdfContainer.requestFullscreen) { // Firefox
+      pdfContainer.requestFullscreen();
+    } else if (pdfContainer.requestFullscreen) { // Chrome, Safari, Opera
+      pdfContainer.requestFullscreen();
+    } else if (pdfContainer.requestFullscreen) { // IE/Edge
+      pdfContainer.requestFullscreen();
+    }
+  }
+  }
+  
+  
+
+  const handleRateInstructor = async () => {
+    if (!instructor) return;
+
+    try {
+      const currentUser = await getCurrentUser()
+      if (!currentUser) throw new Error('User not authenticated')
+
+      // Check if the user has already rated this instructor
+      const existingRating = await databases.listDocuments(
+        DATABASE_ID,
+        INSTRUCTOR_RATINGS_COLLECTION_ID,
+        [
+          Query.equal('instructorId', instructor.$id),
+          Query.equal('userId', currentUser.$id)
+        ]
+      )
+
+      if (existingRating.documents.length > 0) {
+        toast({
+          title: "Déjà évalué",
+          description: "Vous avez déjà évalué cet instructeur.",
+        })
+        return
+      }
+
+      // Create a new rating
+      await databases.createDocument(
+        DATABASE_ID,
+        INSTRUCTOR_RATINGS_COLLECTION_ID,
+        ID.unique(),
+        {
+          instructorId: instructor.$id,
+          userId: currentUser.$id,
+          createdAt: new Date().toISOString()
+        }
+      )
+
+      setInstructorRatings(prevRatings => prevRatings + 1)
+
+      toast({
+        title: "Merci !",
+        description: "Votre évaluation a été enregistrée.",
+      })
+    } catch (error) {
+      console.error('Error rating instructor:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible d'enregistrer votre évaluation. Veuillez réessayer.",
         variant: "destructive",
       })
     }
@@ -176,52 +305,55 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
             </CardContent>
           </Card>
 
-          {course.pdfFileId && pdfUrl && (
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Document du cours</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center">
-                  <Button onClick={togglePdfViewer}>
-                    {showPdfViewer ? 'Masquer le document' : 'Afficher le document'}
-                  </Button>
-                  <Button variant="outline" onClick={handleDownloadPdf}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Télécharger le PDF
-                  </Button>
-                </div>
-                {showPdfViewer && (
-                  <div className="mt-4">
-                    <Document
-                      file={pdfUrl}
-                      onLoadSuccess={handleDocumentLoadSuccess}
-                      className="max-w-full"
-                    >
-                      <Page pageNumber={currentPage} />
-                    </Document>
-                    {numPages && (
-                      <div className="mt-4 flex justify-between items-center">
-                        <Button
-                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                          disabled={currentPage <= 1}
-                        >
-                          Page précédente
-                        </Button>
-                        <span>Page {currentPage} sur {numPages}</span>
-                        <Button
-                          onClick={() => handlePageChange(Math.min(numPages, currentPage + 1))}
-                          disabled={currentPage >= numPages}
-                        >
-                          Page suivante
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+          {pdfUrl && (
+  <Card className="mb-8">
+    <CardHeader>
+      <CardTitle>Document du cours</CardTitle>
+    </CardHeader>
+    <CardContent>
+    <div className="flex justify-between mb-4 w-full">
+  <Button variant="outline" onClick={handleFullscreen} className="flex items-center">
+    <FiMaximize className="mr-2 h-4 w-4" />
+    Plein Écran
+  </Button>
+
+  <Button variant="outline" onClick={handleDownloadPdf} className="flex items-center">
+    <Download className="mr-2 h-4 w-4" />
+    Télécharger le PDF
+  </Button>
+</div>
+
+
+      {/* Instead of using react-pdf, use your custom PDFViewer component */}
+      <div className="w-full h-[80vh]" id="pdf-container">
+        <iframe
+          src={`https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`}
+          className="w-full h-full border-none"
+        />
+      </div>
+
+      {numPages && (
+        <div className="mt-4 flex justify-between items-center">
+          <Button
+            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage <= 1}
+          >
+            Page précédente
+          </Button>
+          <span>Page {currentPage} sur {numPages}</span>
+          <Button
+            onClick={() => handlePageChange(Math.min(numPages, currentPage + 1))}
+            disabled={currentPage >= numPages}
+          >
+            Page suivante
+          </Button>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+)}
+
+
 
           {course.videoFileId && (
             <Card>
@@ -236,6 +368,28 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
                 >
                   Votre navigateur ne supporte pas la lecture de vidéos.
                 </video>
+              </CardContent>
+            </Card>
+          )}
+
+          {course.hasQuizzes && course.quizzes && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Quiz du cours</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Quiz quizzes={course.quizzes || []} />
+              </CardContent>
+            </Card>
+          )}
+
+          {instructor && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Évaluez l'instructeur</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <InstructorRating instructor={instructor} ratings={instructorRatings} onRate={handleRateInstructor} />
               </CardContent>
             </Card>
           )}

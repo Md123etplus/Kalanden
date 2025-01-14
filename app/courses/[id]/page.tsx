@@ -24,7 +24,7 @@ interface CoursePageProps {
   params: { id: string }
 }
 
-export default function CoursePage({ params }: { params: { id: string } }) {
+export default async function CoursePage({ params }: { params: { id: string } }) {
   const { id } = params
 
   async function getCourse(): Promise<Course> {
@@ -37,11 +37,12 @@ export default function CoursePage({ params }: { params: { id: string } }) {
       return course
     } catch (error) {
       console.error('Error fetching course:', error)
-      throw error
+      throw new Error('Failed to fetch course data.')
     }
   }
 
-  const course = use(getCourse())
+  const coursePromise = getCourse()
+  const course = await coursePromise
 
   return <CourseView initialCourse={course} courseId={id} />
 }

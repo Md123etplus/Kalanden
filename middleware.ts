@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If there's no session or user data, only allow access to public routes
-  const publicRoutes = ['/login', '/signup', '/', '/courses']
+  const publicRoutes = ['/login', '/signup', '/']
   if (!publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
