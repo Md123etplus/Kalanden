@@ -230,6 +230,7 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
           title: "Déjà évalué",
           description: "Vous avez déjà évalué cet instructeur.",
         })
+        console.log("Already evaluated")
         return
       }
 
@@ -251,6 +252,8 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
         title: "Merci !",
         description: "Votre évaluation a été enregistrée.",
       })
+      console.log("Done!!")
+
     } catch (error) {
       console.error('Error rating instructor:', error)
       toast({
