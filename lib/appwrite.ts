@@ -19,7 +19,7 @@ export const ENROLLMENTS_COLLECTION_ID = '676747910024c53feade';
 export const BUCKET_ID = '6753658f001ce9532ca7';
 export const TRANSACTIONS_COLLECTION_ID = '676a11870008917be203';
 export const INSTRUCTOR_RATINGS_COLLECTION_ID='678659190000f59e2e7a';
-export const IMAGE_ID = '676f847700303c0f523a';
+export const IMAGE_ID = '678d07b30014d955dcca';
 
 export { ID } from 'appwrite';
 

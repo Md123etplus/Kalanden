@@ -104,8 +104,8 @@ const HomeContent = async () => {
   return (
     <>
       {/* Hero section */}
-      <section className="flex flex-col md:flex-row items-center justify-center mb-16 py-8 px-4 md:px-12">
-        <div className="md:w-1/2 mb-8 md:mb-0 md:order-2 flex justify-center">
+      <section className="flex flex-col md:flex-row items-center justify-center mb-16 px-4 md:px-12">
+        <div className="md:w-1/2 mb-9 md:mb-0 md:order-2 flex justify-center">
           <Image 
             src={heroImageUrl || "/placeholder.svg"} 
             alt="Élèves maliens" 
@@ -182,7 +182,7 @@ const HomeContent = async () => {
           <h2 className="text-2xl font-semibold mb-4">Pour les parents</h2>
           <p className="mb-4 flex-grow">Suivez les performances de vos enfants et participez activement à leur éducation.</p>
           <div className="mt-auto">
-            <Link href="/parent-dashboard">
+            <Link href="/dashboard/parent">
               <Button variant="outline" className="w-full">Tableau de bord parent</Button>
             </Link>
           </div>
@@ -301,7 +301,8 @@ export default function Home() {
             <div>
               <h3 className="text-lg font-semibold mb-4">Nous contacter</h3>
               <a href="mailto:kalanden.education@gmail.com">Email: kalanden.education@gmail.com</a>
-              <p>Téléphone: +223 XX XX XX XX</p>
+              <hr></hr>
+              <a href="tel:+223 77 59 75 87"> Téléphone: +223 77 59 75 87</a>
             </div>
           </div>
           <div className="mt-8 text-center">
