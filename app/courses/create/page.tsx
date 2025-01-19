@@ -16,6 +16,14 @@ import { ID } from 'appwrite'
 import { Upload, Plus, Trash2, FileText, Video, ImageIcon } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 
+interface QuizQuestion {
+  text: string;
+  options: {
+    text: string;
+    isCorrect: boolean;
+  }[];
+}
+
 const STORAGE_BUCKET_ID = '6753658f001ce9532ca7'; // Replace with your actual bucket ID
 
 export default function CreateCoursePage() {
@@ -34,6 +42,7 @@ export default function CreateCoursePage() {
   const [courseVideo, setCourseVideo] = useState<File | null>(null)
   const [courseImagePreview, setCourseImagePreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const router = useRouter()
   const { toast } = useToast()
 
@@ -67,6 +76,16 @@ export default function CreateCoursePage() {
       }
     }
   }
+
+  const handleAddQuizQuestion = () => {
+    setQuizQuestions([...quizQuestions, { text: '', options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }] }]);
+  };
+
+  const handleQuizQuestionChange = (index: number, field: 'text' | 'options', value: string | { text: string; isCorrect: boolean }[]) => {
+    const updatedQuestions = [...quizQuestions];
+    updatedQuestions[index][field] = value as never;
+    setQuizQuestions(updatedQuestions);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,6 +136,7 @@ export default function CreateCoursePage() {
           updatedAt: new Date().toISOString(),
           hasQuizzes: formData.hasQuizzes,
           enrolledStudents: 0,
+          quizzes: formData.hasQuizzes ? JSON.stringify(quizQuestions) : null,
         }
       );
 
@@ -154,7 +174,14 @@ export default function CreateCoursePage() {
       <Header />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-4">Créer un nouveau cours</h1>
-        <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl mx-auto" onChange={preventScroll}>
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit(e);
+          }} 
+          className="space-y-6 max-w-3xl mx-auto" 
+          onChange={preventScroll}
+        >
           <Card>
             <CardHeader>
               <CardTitle>Image principale du cours</CardTitle>
@@ -164,7 +191,7 @@ export default function CreateCoursePage() {
                 {courseImagePreview ? (
                   <div className="relative w-full h-full">
                     <img
-                      src={courseImagePreview}
+                      src={courseImagePreview || "/placeholder.svg"}
                       alt="Aperçu du cours"
                       className="w-full h-full object-cover"
                     />
@@ -338,6 +365,43 @@ export default function CreateCoursePage() {
                 />
                 <Label htmlFor="hasQuizzes">Inclure des quiz</Label>
               </div>
+              {formData.hasQuizzes && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Questions du quiz</h3>
+                  {quizQuestions.map((question, questionIndex) => (
+                    <div key={questionIndex} className="space-y-2 border p-4 rounded">
+                      <Input
+                        placeholder={`Question ${questionIndex + 1}`}
+                        value={question.text}
+                        onChange={(e) => handleQuizQuestionChange(questionIndex, 'text', e.target.value)}
+                      />
+                      {question.options.map((option, optionIndex) => (
+                        <div key={optionIndex} className="flex items-center space-x-2">
+                          <Input
+                            placeholder={`Option ${optionIndex + 1}`}
+                            value={option.text}
+                            onChange={(e) => {
+                              const newOptions = [...question.options];
+                              newOptions[optionIndex].text = e.target.value;
+                              handleQuizQuestionChange(questionIndex, 'options', newOptions);
+                            }}
+                          />
+                          <Switch
+                            checked={option.isCorrect}
+                            onCheckedChange={(checked) => {
+                              const newOptions = [...question.options];
+                              newOptions[optionIndex].isCorrect = checked;
+                              handleQuizQuestionChange(questionIndex, 'options', newOptions);
+                            }}
+                          />
+                          <Label>Correct</Label>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                  <Button type="button" onClick={handleAddQuizQuestion}>Ajouter une question</Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

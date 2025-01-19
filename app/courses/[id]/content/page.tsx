@@ -1,25 +1,26 @@
 "use client"
-import { use } from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Image from 'next/image'
-import { Maximize2, Minimize2, Download, ThumbsUp } from 'lucide-react'
+import { Maximize2, Minimize2, Download } from 'lucide-react'
 import { databases, storage, DATABASE_ID, COURSES_COLLECTION_ID, ENROLLMENTS_COLLECTION_ID, USERS_COLLECTION_ID, getCurrentUser } from '@/lib/appwrite'
 import { Query, ID } from 'appwrite'
 import { ErrorDisplay } from '@/components/ui/error'
 import { useToast } from '@/components/use-toast'
 import { Document, Page, pdfjs } from 'react-pdf'
-import { FiMaximize, FiDownload } from 'react-icons/fi'
+import { FiMaximize } from 'react-icons/fi'
 
 import dynamic from 'next/dynamic'
-
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
-// import 'react-pdf/dist/esm/Page/TextLayer.css'
-import { Quiz } from '@/components/Quiz'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { InstructorRating } from '@/components/InstructorRating'
+
+
+// import 'react-pdf/dist/esm/Page/TextLayer.css'
 
 interface Course {
   $id: string;
@@ -38,7 +39,7 @@ interface Course {
   duration: number;
   hasQuizzes: boolean;
   enrolledStudents: number;
-  quizzes?: any[];
+  quizzes?: string; // Updated quiz type
 }
 
 interface Instructor {
@@ -46,6 +47,14 @@ interface Instructor {
   name: string;
   profileImageId?: string;
   bio?: string;
+}
+
+interface QuizQuestion {
+  text: string;
+  options: {
+    text: string;
+    isCorrect: boolean;
+  }[];
 }
 
 const INSTRUCTOR_RATINGS_COLLECTION_ID = '678659190000f59e2e7a';
@@ -62,6 +71,11 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
   const [numPages, setNumPages] = useState<number | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]); // New state for quiz questions
+  const [quizResponses, setQuizResponses] = useState<number[]>([]); // Updated quiz responses type
+  const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [quizResults, setQuizResults] = useState<{ questionIndex: number; isCorrect: boolean }[] | null>(null); // New state for quiz results
+  const [hasRatedInstructor, setHasRatedInstructor] = useState(false); // New state for instructor rating
   const router = useRouter()
   const { toast } = useToast()
 
@@ -124,6 +138,17 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
           setInstructor(null); // Optional: Handle case when instructor data is missing
         }
 
+        // Parse quiz data
+        if (courseData.quizzes) {
+          try {
+            const parsedQuizzes = JSON.parse(courseData.quizzes);
+            setQuizQuestions(parsedQuizzes);
+            setQuizResponses(new Array(parsedQuizzes.length).fill(-1));
+          } catch (error) {
+            console.error('Error parsing quiz data:', error);
+          }
+        }
+
       } catch (error) {
         console.error('Error fetching course:', error);
         setError('Failed to load course. Please try again.');
@@ -145,6 +170,9 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
     const fetchInstructorRatings = async () => {
       if (instructor) {
         try {
+          const currentUser = await getCurrentUser();
+          if (!currentUser) throw new Error('User not authenticated');
+
           const ratingsResponse = await databases.listDocuments(
             DATABASE_ID,
             INSTRUCTOR_RATINGS_COLLECTION_ID,
@@ -152,6 +180,9 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
           );
           console.log("Instructor Ratings:", ratingsResponse);
           setInstructorRatings(ratingsResponse.documents.length);
+
+          const userRating = ratingsResponse.documents.find(doc => doc.userId === currentUser.$id);
+          setHasRatedInstructor(!!userRating);
         } catch (error) {
           console.error("Error fetching instructor ratings:", error);
         }
@@ -230,7 +261,6 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
           title: "Déjà évalué",
           description: "Vous avez déjà évalué cet instructeur.",
         })
-        console.log("Already evaluated")
         return
       }
 
@@ -247,12 +277,12 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
       )
 
       setInstructorRatings(prevRatings => prevRatings + 1)
+      setHasRatedInstructor(true)
 
       toast({
         title: "Merci !",
         description: "Votre évaluation a été enregistrée.",
       })
-      console.log("Done!!")
 
     } catch (error) {
       console.error('Error rating instructor:', error)
@@ -263,6 +293,20 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
       })
     }
   }
+
+  const handleQuizSubmit = () => {
+    if (quizQuestions.length === 0) return;
+
+    const results = quizQuestions.map((question, index) => {
+      const selectedOptionIndex = quizResponses[index];
+      const isCorrect = selectedOptionIndex !== -1 && question.options[selectedOptionIndex].isCorrect;
+      return { questionIndex: index, isCorrect };
+    });
+
+    const score = results.filter(result => result.isCorrect).length;
+    setQuizScore((score / quizQuestions.length) * 100);
+    setQuizResults(results);
+  };
 
   if (isLoading) {
     return <div className="text-center p-8">Chargement du cours...</div>
@@ -375,13 +419,50 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
             </Card>
           )}
 
-          {course.hasQuizzes && course.quizzes && (
+          {course.hasQuizzes && quizQuestions.length > 0 && ( // Updated condition to check quizQuestions
             <Card>
               <CardHeader>
                 <CardTitle>Quiz du cours</CardTitle>
               </CardHeader>
               <CardContent>
-                <Quiz quizzes={course.quizzes || []} />
+                {quizQuestions.map((question, questionIndex) => (
+                  <div key={questionIndex} className="mb-4">
+                    <p className="font-semibold">{question.text}</p>
+                    <div className="space-y-2 mt-2">
+                      {question.options.map((option, optionIndex) => (
+                        <div key={optionIndex} className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id={`question-${questionIndex}-option-${optionIndex}`}
+                            name={`question-${questionIndex}`}
+                            checked={quizResponses[questionIndex] === optionIndex}
+                            onChange={() => {
+                              const newResponses = [...quizResponses];
+                              newResponses[questionIndex] = optionIndex;
+                              setQuizResponses(newResponses);
+                            }}
+                          />
+                          <label htmlFor={`question-${questionIndex}-option-${optionIndex}`}>
+                            {option.text}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <Button onClick={handleQuizSubmit} className="mt-4">Soumettre le quiz</Button>
+                {quizScore !== null && quizResults && (
+                  <div className="mt-4">
+                    <p className="font-semibold">Votre score : {quizScore.toFixed(2)}%</p>
+                    <ul className="mt-2">
+                      {quizResults.map((result) => (
+                        <li key={result.questionIndex} className={result.isCorrect ? "text-green-500" : "text-red-500"}>
+                          {result.isCorrect ? "✓" : "✗"} Question {result.questionIndex + 1}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -392,7 +473,7 @@ export default function CourseContent({ params }: { params: Promise<{ id: string
                 <CardTitle>Évaluez l'instructeur</CardTitle>
               </CardHeader>
               <CardContent>
-                <InstructorRating instructor={instructor} ratings={instructorRatings} onRate={handleRateInstructor} />
+                <InstructorRating instructor={instructor} ratings={instructorRatings} onRate={handleRateInstructor} hasRated={hasRatedInstructor} />
               </CardContent>
             </Card>
           )}

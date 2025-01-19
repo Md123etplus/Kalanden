@@ -6,6 +6,23 @@
   padding-top:2.2rem!important;
   padding-bottom:2.2rem!important;
 }
+.tiptap.ProseMirror.prose.dark\:prose-invert.max-w-none.focus\:outline-none.min-h-\[200px\].p-4 ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem; /* Adjust indentation */
+  padding-left: 1.5rem;
+}
+
+.tiptap.ProseMirror.prose.dark\:prose-invert.max-w-none.focus\:outline-none.min-h-\[200px\].p-4 ul {
+  list-style-type: disc; /* Ensures bullets are displayed */
+  margin-left: 1.5rem; /* Adjust indentation */
+  padding-left: 1.5rem;
+}
+.tiptap.ProseMirror {
+  white-space: pre-wrap; /* Preserve spaces and line breaks */
+  word-break: break-word; /* Handle word wrapping properly */
+}
+
+
 @layer base {
   :root {
     --background: 0 0% 100%;
