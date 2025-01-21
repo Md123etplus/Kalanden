@@ -22,11 +22,12 @@ const subjects = ['Mathématiques', 'Sciences', 'Langues']
 
 const getImageUrl = async (fileId: string) => {
   try {
-    const fileUrl = storage.getFileView('6753658f001ce9532ca7', fileId);
+    if (!fileId) return null; // If no fileId, return null
+    const fileUrl = await storage.getFileView('6753658f001ce9532ca7', fileId);
     return fileUrl.toString(); // Convert to string to ensure it's a valid URL
   } catch (error) {
     console.error('Error fetching image:', error);
-    return null;
+    return null; // Return null if error occurs
   }
 };
 
@@ -42,21 +43,25 @@ export function CourseList({ initialCourses }: { initialCourses: Course[] }) {
   const [courses, setCourses] = useState<Course[]>(initialCourses)
 
   useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    setIsOnline(navigator.onLine); // Set initial state
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
     const search = searchParams.get('search')
     if (search) {
       setSearchQuery(search)
     }
-    setIsOnline(navigator.onLine)
-    window.addEventListener('online', () => setIsOnline(true))
-    window.addEventListener('offline', () => setIsOnline(false))
 
-    return () => {
-      window.removeEventListener('online', () => setIsOnline(true))
-      window.removeEventListener('offline', () => setIsOnline(false))
-    }
-  }, [searchParams])
-
-  useEffect(() => {
     const fetchCourses = async () => {
       try {
         let queries = [Query.limit(100)]
@@ -73,13 +78,13 @@ export function CourseList({ initialCourses }: { initialCourses: Course[] }) {
         if (showFreeOnly) {
           queries.push(Query.equal('price', 0))
         }
-        
+
         const response = await databases.listDocuments(
           DATABASE_ID,
           COURSES_COLLECTION_ID,
           queries
         )
-        
+
         const coursesWithImages = await Promise.all(response.documents.map(async (course) => {
           let imageUrl = null;
           if (course.imageFileId) {
@@ -87,7 +92,7 @@ export function CourseList({ initialCourses }: { initialCourses: Course[] }) {
           }
           return { ...course, image: imageUrl };
         }));
-        
+
         setCourses(coursesWithImages as unknown as Course[]);
       } catch (error) {
         console.error('Error fetching courses:', error)

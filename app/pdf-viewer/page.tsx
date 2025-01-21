@@ -1,8 +1,9 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
-export default function PDFViewer() {
+function PDFViewerContent() {
   const searchParams = useSearchParams()
   const url = searchParams.get('url')
 
@@ -20,3 +21,10 @@ export default function PDFViewer() {
   )
 }
 
+export default function PDFViewer() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <PDFViewerContent />
+    </Suspense>
+  )
+}

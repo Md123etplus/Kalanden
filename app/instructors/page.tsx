@@ -1,16 +1,22 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { Header } from '@/components/header'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import Image from 'next/image'
-import Link from 'next/link'
-import { databases, DATABASE_ID, USERS_COLLECTION_ID, COURSES_COLLECTION_ID, INSTRUCTOR_RATINGS_COLLECTION_ID } from '@/lib/appwrite'
-import { Query } from 'appwrite'
+import { useState, useEffect } from "react"
+import { Header } from "@/components/header"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import Image from "next/image"
+import Link from "next/link"
+import {
+  databases,
+  DATABASE_ID,
+  USERS_COLLECTION_ID,
+  COURSES_COLLECTION_ID,
+  INSTRUCTOR_RATINGS_COLLECTION_ID,
+} from "@/lib/appwrite"
+import { Query } from "appwrite"
 import {
   Dialog,
   DialogContent,
@@ -21,55 +27,51 @@ import {
 } from "@/components/ui/dialog"
 
 interface Instructor {
-  $id: string;
-  name: string;
-  location: string;
-  profileImageId?: string;
-  bio?: string;
-  coursesCreated: number;
-  likes: number;
-  email: string;
-  phoneNumber: string;
+  $id: string
+  name: string
+  location: string
+  profileImageId?: string
+  bio?: string
+  coursesCreated: number
+  likes: number
+  email: string
+  phoneNumber: string
 }
 
 export default function InstructorsPage() {
   const [instructors, setInstructors] = useState<Instructor[]>([])
   const [filteredInstructors, setFilteredInstructors] = useState<Instructor[]>([])
   const [locations, setLocations] = useState<string[]>([])
-  const [selectedLocation, setSelectedLocation] = useState<string>('all')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState<string>("all")
+  const [searchQuery, setSearchQuery] = useState("")
   const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null)
 
   useEffect(() => {
     const fetchInstructors = async () => {
       try {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          USERS_COLLECTION_ID,
-          [
-            Query.equal('role', 'instructor'),
-            Query.limit(100)
-          ]
-        )
+        const response = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION_ID, [
+          Query.equal("role", "instructor"),
+          Query.limit(100),
+        ])
         const fetchedInstructors = response.documents as unknown as Instructor[]
-        
+
         const instructorsWithDetails = await Promise.all(
           fetchedInstructors.map(async (instructor) => {
             const coursesCreated = await fetchCoursesCountForInstructor(instructor.$id)
             const likes = await fetchLikesForInstructor(instructor.$id)
             return { ...instructor, coursesCreated, likes }
-          })
+          }),
         )
 
-        const sortedInstructors = instructorsWithDetails.sort((a, b) => b.likes - a.likes);
-        setInstructors(sortedInstructors);
-        setFilteredInstructors(sortedInstructors);
+        const sortedInstructors = instructorsWithDetails.sort((a, b) => b.likes - a.likes)
+        setInstructors(sortedInstructors)
+        setFilteredInstructors(sortedInstructors)
 
         // Extract unique locations
-        const uniqueLocations = Array.from(new Set(sortedInstructors.map(instructor => instructor.location)))
+        const uniqueLocations = Array.from(new Set(instructorsWithDetails.map((instructor) => instructor.location)))
         setLocations(uniqueLocations)
       } catch (error) {
-        console.error('Error fetching instructors:', error)
+        console.error("Error fetching instructors:", error)
       }
     }
 
@@ -78,11 +80,9 @@ export default function InstructorsPage() {
 
   const fetchCoursesCountForInstructor = async (instructorId: string) => {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        COURSES_COLLECTION_ID,
-        [Query.equal('createdBy', instructorId)]
-      )
+      const response = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION_ID, [
+        Query.equal("createdBy", instructorId),
+      ])
       return response.documents.length
     } catch (error) {
       console.error("Error fetching courses:", error)
@@ -92,11 +92,9 @@ export default function InstructorsPage() {
 
   const fetchLikesForInstructor = async (instructorId: string) => {
     try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        INSTRUCTOR_RATINGS_COLLECTION_ID,
-        [Query.equal('instructorId', instructorId)]
-      )
+      const response = await databases.listDocuments(DATABASE_ID, INSTRUCTOR_RATINGS_COLLECTION_ID, [
+        Query.equal("instructorId", instructorId),
+      ])
       return response.documents.length
     } catch (error) {
       console.error("Error fetching likes:", error)
@@ -106,14 +104,15 @@ export default function InstructorsPage() {
 
   useEffect(() => {
     const filtered = instructors
-      .filter(instructor => 
-        (selectedLocation === 'all' || instructor.location === selectedLocation) &&
-        (instructor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-         instructor.bio?.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter(
+        (instructor) =>
+          (selectedLocation === "all" || instructor.location === selectedLocation) &&
+          (instructor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            instructor.bio?.toLowerCase().includes(searchQuery.toLowerCase())),
       )
-      .sort((a, b) => b.likes - a.likes);
-    setFilteredInstructors(filtered);
-  }, [selectedLocation, searchQuery, instructors]);
+      .sort((a, b) => b.likes - a.likes)
+    setFilteredInstructors(filtered)
+  }, [selectedLocation, searchQuery, instructors])
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -130,8 +129,10 @@ export default function InstructorsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes les localisations</SelectItem>
-                {locations.map(location => (
-                  <SelectItem key={location} value={location}>{location}</SelectItem>
+                {locations.map((location) => (
+                  <SelectItem key={location} value={location}>
+                    {location}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -149,14 +150,15 @@ export default function InstructorsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredInstructors.map((instructor, index) => (
-            <Card key={instructor.$id} className="relative">
-              <div className="absolute top-2 left-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">
-                {index + 1}
-              </div>
+          {filteredInstructors.map((instructor) => (
+            <Card key={instructor.$id}>
               <CardHeader>
                 <Image
-                  src={instructor.profileImageId ? `/api/images/${instructor.profileImageId}` : '/placeholder.svg?height=100&width=100'}
+                  src={
+                    instructor.profileImageId
+                      ? `/api/images/${instructor.profileImageId}`
+                      : "/placeholder.svg?height=100&width=100"
+                  }
                   alt={instructor.name}
                   width={100}
                   height={100}
@@ -181,29 +183,20 @@ export default function InstructorsPage() {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Contacter {selectedInstructor?.name}</DialogTitle>
-                      <DialogDescription>
-                        Voici les informations de contact de l'instructeur.
-                      </DialogDescription>
+                      <DialogDescription>Voici les informations de contact de l'instructeur.</DialogDescription>
                     </DialogHeader>
                     {selectedInstructor && (
-                     <div className="mt-4">
-                     <p>
-                       <strong>Email:</strong>{" "}
-                       <a href={`mailto:${selectedInstructor.email}`} className="text-blue-500 underline">
-                         {selectedInstructor.email}
-                       </a>
-                     </p>
-                     <p>
-                       <strong>Téléphone:</strong>{" "}
-                       <a href={`tel:${selectedInstructor.phoneNumber}`} className="text-blue-500 underline">
-                         {selectedInstructor.phoneNumber}
-                       </a>
-                     </p>
-                     <p>
-                       <strong>Localisation:</strong> {selectedInstructor.location}
-                     </p>
-                   </div>
-                   
+                      <div className="mt-4">
+                        <p>
+                          <strong>Email:</strong> {selectedInstructor.email}
+                        </p>
+                        <p>
+                          <strong>Téléphone:</strong> {selectedInstructor.phoneNumber}
+                        </p>
+                        <p>
+                          <strong>Localisation:</strong> {selectedInstructor.location}
+                        </p>
+                      </div>
                     )}
                   </DialogContent>
                 </Dialog>

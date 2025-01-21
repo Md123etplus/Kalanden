@@ -1,7 +1,6 @@
-import { use } from 'react'
-import { databases, DATABASE_ID, COURSES_COLLECTION_ID } from '@/lib/appwrite'
-import { CourseView } from './CourseView'
-import { Models } from 'appwrite'
+import { databases, DATABASE_ID, COURSES_COLLECTION_ID } from '@/lib/appwrite';
+import { CourseView } from './CourseView';
+import { Models } from 'appwrite';
 
 interface Course extends Models.Document {
   title: string;
@@ -20,30 +19,28 @@ interface Course extends Models.Document {
   createdBy: string;
 }
 
+// Adjusted CoursePageProps to expect a Promise for params
 interface CoursePageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>; // Ensure params is a Promise
+}
+interface CoursePageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default async function CoursePage({ params }: { params: { id: string } }) {
-  const { id } = params
+export default async function CoursePage({ params }: CoursePageProps) {
+  const { id } = await params; // Await the Promise to resolve 'params'
 
   async function getCourse(): Promise<Course> {
-    try {
-      const course = await databases.getDocument<Course>(
-        DATABASE_ID,
-        COURSES_COLLECTION_ID,
-        id
-      )
-      return course
-    } catch (error) {
-      console.error('Error fetching course:', error)
-      throw new Error('Failed to fetch course data.')
-    }
+    // Fetch course data
+    const course = await databases.getDocument<Course>(
+      DATABASE_ID,
+      COURSES_COLLECTION_ID,
+      id
+    );
+    return course;
   }
 
-  const coursePromise = getCourse()
-  const course = await coursePromise
+  const course = await getCourse();
 
-  return <CourseView initialCourse={course} courseId={id} />
+  return <CourseView initialCourse={course} courseId={id} />;
 }
-

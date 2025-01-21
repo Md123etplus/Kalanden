@@ -1,77 +1,84 @@
-'use client'
+"use client"
 
-import React, { useState, useEffect, use } from 'react'
-import { Header } from '@/components/header'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { databases, DATABASE_ID, COURSES_COLLECTION_ID, ENROLLMENTS_COLLECTION_ID } from '@/lib/appwrite'
-import { Query } from 'appwrite'
+import React, { useState, useEffect } from "react"
+import { Header } from "@/components/header"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { databases, DATABASE_ID, COURSES_COLLECTION_ID, ENROLLMENTS_COLLECTION_ID } from "@/lib/appwrite"
+import { Query } from "appwrite"
 
 interface CourseStats {
-  title: string;
-  enrolledStudents: number;
-  averageProgress: number;
-  completionRate: number;
-  totalRevenue: number;
-  instructorRevenue: number;
-  platformCommission: number;
+  title: string
+  enrolledStudents: number
+  averageProgress: number
+  completionRate: number
+  totalRevenue: number
+  instructorRevenue: number
+  platformCommission: number
 }
 
-export default function CourseStatisticsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: courseId } = use(params)
+interface CourseStatisticsPageProps {
+  params: Promise<{
+    id: string
+  }>
+}
+
+export default async function CourseStatisticsPage({ params }: CourseStatisticsPageProps) {
+  const { id: courseId } = await params // Await the params Promise
   const [courseStats, setCourseStats] = useState<CourseStats>({
-    title: '',
+    title: "",
     enrolledStudents: 0,
     averageProgress: 0,
     completionRate: 0,
     totalRevenue: 0,
     instructorRevenue: 0,
-    platformCommission: 0
+    platformCommission: 0,
   })
 
   useEffect(() => {
-    const fetchCourseStatistics = async () => {
-      try {
-        // Fetch course details
-        const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION_ID, courseId)
+    ;(async () => {
+      const { id: courseId } = await params // Await the params Promise
+      const fetchCourseStatistics = async () => {
+        try {
+          // Fetch course details
+          const course = await databases.getDocument(DATABASE_ID, COURSES_COLLECTION_ID, courseId)
 
-        // Fetch enrollments for this course
-        const enrollments = await databases.listDocuments(
-          DATABASE_ID,
-          ENROLLMENTS_COLLECTION_ID,
-          [Query.equal('courseId', courseId)]
-        )
+          // Fetch enrollments for this course
+          const enrollments = await databases.listDocuments(DATABASE_ID, ENROLLMENTS_COLLECTION_ID, [
+            Query.equal("courseId", courseId),
+          ])
 
-        const totalEnrollments = enrollments.documents.length
-        const totalProgress = enrollments.documents.reduce((sum, enrollment) => sum + (enrollment.progress || 0), 0)
-        const completedEnrollments = enrollments.documents.filter(enrollment => enrollment.progress === 100).length
+          const totalEnrollments = enrollments.documents.length
+          const totalProgress = enrollments.documents.reduce((sum, enrollment) => sum + (enrollment.progress || 0), 0)
+          const completedEnrollments = enrollments.documents.filter((enrollment) => enrollment.progress === 100).length
 
-        // Calculate revenue
-        const totalRevenue = totalEnrollments * course.price
-        const instructorRevenue = totalRevenue * 0.7 // 70% for instructor
-        const platformCommission = totalRevenue * 0.3 // 30% platform fee
+          // Calculate revenue
+          const totalRevenue = totalEnrollments * course.price
+          const instructorRevenue = totalRevenue * 0.7 // 70% for instructor
+          const platformCommission = totalRevenue * 0.3 // 30% platform fee
 
-        setCourseStats({
-          title: course.title,
-          enrolledStudents: totalEnrollments,
-          averageProgress: totalEnrollments > 0 ? totalProgress / totalEnrollments : 0,
-          completionRate: totalEnrollments > 0 ? (completedEnrollments / totalEnrollments) * 100 : 0,
-          totalRevenue,
-          instructorRevenue,
-          platformCommission
-        })
-      } catch (error) {
-        console.error('Error fetching course statistics:', error)
+          setCourseStats({
+            title: course.title,
+            enrolledStudents: totalEnrollments,
+            averageProgress: totalEnrollments > 0 ? totalProgress / totalEnrollments : 0,
+            completionRate: totalEnrollments > 0 ? (completedEnrollments / totalEnrollments) * 100 : 0,
+            totalRevenue,
+            instructorRevenue,
+            platformCommission,
+          })
+        } catch (error) {
+          console.error("Error fetching course statistics:", error)
+        }
       }
-    }
 
-    fetchCourseStatistics()
-  }, [courseId])
+      fetchCourseStatistics()
+    })()
+  }, [params]) // Update dependency array to use params
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "XOF",
+      minimumFractionDigits: 0,
     }).format(amount)
   }
 
@@ -132,7 +139,9 @@ export default function CourseStatisticsPage({ params }: { params: Promise<{ id:
               <CardDescription>30% des ventes</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold text-muted-foreground">{formatCurrency(courseStats.platformCommission)}</p>
+              <p className="text-4xl font-bold text-muted-foreground">
+                {formatCurrency(courseStats.platformCommission)}
+              </p>
             </CardContent>
           </Card>
         </div>
