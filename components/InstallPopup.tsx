@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react"
 import { X } from "lucide-react"
 import { Button } from "./ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 
 export function InstallPopup() {
   const [isVisible, setIsVisible] = useState(false)
   const [isDismissed, setIsDismissed] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [showInstructions, setShowInstructions] = useState(false)
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -52,8 +54,7 @@ export function InstallPopup() {
         setDeferredPrompt(null)
       }
     } else {
-      // Fallback for devices that don't support the install prompt
-      alert("Pour installer l'application, ajoutez cette page à votre écran d'accueil.")
+      setShowInstructions(true)
     }
   }
 
@@ -69,6 +70,28 @@ export function InstallPopup() {
       <Button onClick={handleInstall} className="w-full">
         Installer l'application
       </Button>
+
+      <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Comment installer Kalandén</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <h4 className="font-semibold mb-2">Sur Android :</h4>
+            <ol className="list-decimal list-inside mb-4">
+              <li>Appuyez sur les trois points en haut à droite de votre navigateur</li>
+              <li>Sélectionnez "Ajouter à l'écran d'accueil"</li>
+              <li>Confirmez l'ajout</li>
+            </ol>
+            <h4 className="font-semibold mb-2">Sur iOS :</h4>
+            <ol className="list-decimal list-inside">
+              <li>Appuyez sur l'icône de partage en bas de votre navigateur</li>
+              <li>Faites défiler et sélectionnez "Sur l'écran d'accueil"</li>
+              <li>Appuyez sur "Ajouter" en haut à droite</li>
+            </ol>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
