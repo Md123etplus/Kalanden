@@ -34,7 +34,7 @@ const getImageUrl = async (fileId: string) => {
 export function CourseList({ initialCourses }: { initialCourses: Course[] }) {
   const [selectedLevel, setSelectedLevel] = useState<string>('all')
   const [selectedSubject, setSelectedSubject] = useState<string>('all')
-  const [maxDuration, setMaxDuration] = useState<number>(50)
+  const [maxDuration, setMaxDuration] = useState<number>(10000)
   const [quizzesOnly, setQuizzesOnly] = useState<boolean>(false)
   const [showFreeOnly, setShowFreeOnly] = useState<boolean>(false)
   const searchParams = useSearchParams()
@@ -64,7 +64,7 @@ export function CourseList({ initialCourses }: { initialCourses: Course[] }) {
 
     const fetchCourses = async () => {
       try {
-        let queries = [Query.limit(100)]
+        let queries = [Query.limit(500)]
         
         if (selectedLevel !== 'all') {
           queries.push(Query.equal('level', selectedLevel))
@@ -105,6 +105,13 @@ export function CourseList({ initialCourses }: { initialCourses: Course[] }) {
   const filteredCourses = courses.filter(course => 
     course.duration !== undefined && course.duration <= maxDuration
   )
+
+  function generateRandomColor(text: string): string {
+    const hash = [...text].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const colors = ['#FFB6C1', '#ADD8E6', '#FFD700', '#98FB98', '#FF6347', '#40E0D0'];
+    return colors[hash % colors.length];
+  }
+  
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -181,15 +188,25 @@ export function CourseList({ initialCourses }: { initialCourses: Course[] }) {
           {filteredCourses.map((course: Course) => (
             <Card key={course.$id}>
               <CardHeader>
-                <div className="course-image-container">
-                  <Image 
-                    src={course.image || '/placeholder.svg?height=200&width=300'} 
-                    alt={course.title} 
-                    width={300} 
-                    height={200} 
-                    className="w-full h-full object-cover rounded-t-lg" 
-                  />
-                </div>
+              <div className="course-image-container">
+  {course.image ? (
+    <Image 
+      src={course.image} 
+      alt={course.title} 
+      width={300} 
+      height={200} 
+      className="w-full h-full object-cover rounded-t-lg" 
+    />
+  ) : (
+    <div 
+      className="w-full h-[200px] bg-gray-300 flex items-center justify-center rounded-t-lg text-4xl font-bold text-white"
+      style={{ backgroundColor: generateRandomColor(course.title) }}
+    >
+      {course.title.charAt(0).toUpperCase()}
+    </div>
+  )}
+</div>
+
               </CardHeader>
               <CardContent className="flex-grow">
                 <CardTitle>{course.title}</CardTitle>

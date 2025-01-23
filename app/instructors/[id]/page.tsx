@@ -82,6 +82,13 @@ export default function InstructorProfilePage({ params }: { params: Promise<{ id
     return <div className="flex justify-center items-center min-h-screen">Instructor not found</div>
   }
 
+  function generateRandomColor(text: string): string {
+    const hash = [...text].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const colors = ['#FFA07A', '#20B2AA', '#FF69B4', '#87CEEB', '#DDA0DD', '#FFD700'];
+    return colors[hash % colors.length];
+  }
+  
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
@@ -153,28 +160,37 @@ export default function InstructorProfilePage({ params }: { params: Promise<{ id
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="courses">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course) => (
-                <Card key={course.$id} className="flex flex-col">
-                  <Image
-                    src={course.imageFileId ? `/api/images/${course.imageFileId}` : "/placeholder.svg"}
-                    alt={course.title}
-                    width={400}
-                    height={200}
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                  <CardContent className="flex-grow p-4">
-                    <h3 className="font-semibold mb-2">{course.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-4">{course.description}</p>
-                    <p className="text-sm">
-                      <Users className="inline w-4 h-4 mr-2" />
-                      {course.enrolledStudents} étudiants
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          <TabsContent value="courses"><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {courses.map((course) => (
+    <Card key={course.$id} className="flex flex-col">
+      {course.imageFileId ? (
+        <Image
+          src={`/api/images/${course.imageFileId}`}
+          alt={course.title}
+          width={400}
+          height={200}
+          className="w-full h-48 object-cover rounded-t-lg"
+        />
+      ) : (
+        <div 
+          className="w-full h-48 flex items-center justify-center rounded-t-lg text-3xl font-bold text-white"
+          style={{ backgroundColor: generateRandomColor(course.title) }}
+        >
+          {course.title.charAt(0).toUpperCase()}
+        </div>
+      )}
+      <CardContent className="flex-grow p-4">
+        <h3 className="font-semibold mb-2">{course.title}</h3>
+        <p className="text-sm text-muted-foreground mb-4">{course.description}</p>
+        <p className="text-sm">
+          <Users className="inline w-4 h-4 mr-2" />
+          {course.enrolledStudents} étudiants
+        </p>
+      </CardContent>
+    </Card>
+  ))}
+</div>
+
           </TabsContent>
           <TabsContent value="contact">
             <Card>

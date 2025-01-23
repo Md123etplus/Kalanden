@@ -45,6 +45,7 @@ const INSTRUCTOR_IMAGE_ID = '67674c1200010784cf7a'
 const PARENT_IMAGE_ID = '6771faf700129f3f59ff'
 const HERO_IMAGE_ID = IMAGE_ID
 
+
 const fetchData = async () => {
   let popularCourses: Course[] = []
   let studentImageUrl = '/placeholder.svg?height=150&width=200'
@@ -100,6 +101,13 @@ const fetchData = async () => {
 
 const HomeContent = async () => {
   const { popularCourses, heroImageUrl, studentImageUrl, instructorImageUrl, parentImageUrl } = await fetchData();
+
+  function generateRandomColor(text: string): string {
+    const hash = [...text].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const colors = ['#FFA07A', '#20B2AA', '#FF69B4', '#87CEEB', '#DDA0DD', '#FFD700'];
+    return colors[hash % colors.length];
+  }
+  
 
   return (
     <>
@@ -193,30 +201,42 @@ const HomeContent = async () => {
       <section className="mb-16 py-8">
         <h2 className="text-3xl font-bold mb-8 text-center">Cours populaires</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {popularCourses.map((course) => (
-            <Card key={course.$id}>
-              <CardHeader>
-                <Image 
-                  src={course.image || '/placeholder.svg?height=100&width=200'} 
-                  alt={course.title} 
-                  width={200} 
-                  height={100} 
-                  className="w-full h-40 object-cover rounded-t-lg" 
-                />
-              </CardHeader>
-              <CardContent>
-                <CardTitle>{course.title}</CardTitle>
-                <CardDescription>{course.description}</CardDescription>
-                <p className="mt-2">Niveau: {course.level}</p>
-                <p className="mt-2 font-bold">{course.price === 0 ? 'Gratuit' : `Prix: ${course.price} FCFA`}</p>
-                <p className="mt-2">Étudiants inscrits: {course.enrolledStudents || 0}</p>
-                <Link href={`/courses/${course.$id}`} className="mt-4 inline-block">
-                  <Button>{course.price === 0 ? 'Commencer' : 'Voir le cours'}</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+  {popularCourses.map((course) => (
+    <Card key={course.$id}>
+      <CardHeader>
+        {course.image ? (
+          <Image
+            src={course.image}
+            alt={course.title}
+            width={200}
+            height={100}
+            className="w-full h-40 object-cover rounded-t-lg"
+          />
+        ) : (
+          <div 
+            className="w-full h-40 flex items-center justify-center rounded-t-lg text-3xl font-bold text-white"
+            style={{ backgroundColor: generateRandomColor(course.title) }}
+          >
+            {course.title.charAt(0).toUpperCase()}
+          </div>
+        )}
+      </CardHeader>
+      <CardContent>
+        <CardTitle>{course.title}</CardTitle>
+        <CardDescription>{course.description}</CardDescription>
+        <p className="mt-2">Niveau: {course.level}</p>
+        <p className="mt-2 font-bold">
+          {course.price === 0 ? 'Gratuit' : `Prix: ${course.price} FCFA`}
+        </p>
+        <p className="mt-2">Étudiants inscrits: {course.enrolledStudents || 0}</p>
+        <Link href={`/courses/${course.$id}`} className="mt-4 inline-block">
+          <Button>{course.price === 0 ? 'Commencer' : 'Voir le cours'}</Button>
+        </Link>
+      </CardContent>
+    </Card>
+  ))}
+</div>
+
       </section>
       
       {/* Popular instructors section */}

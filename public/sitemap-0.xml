@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+<url><loc>https://kalanden.vercel.app/competitions-events</loc><lastmod>2025-01-21T20:13:25.431Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/courses</loc><lastmod>2025-01-21T20:13:25.432Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/courses/create</loc><lastmod>2025-01-21T20:13:25.432Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/dashboard/instructor</loc><lastmod>2025-01-21T20:13:25.432Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/dashboard/parent</loc><lastmod>2025-01-21T20:13:25.432Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/dashboard</loc><lastmod>2025-01-21T20:13:25.432Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/dashboard/student/connection-requests</loc><lastmod>2025-01-21T20:13:25.432Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/dashboard/student</loc><lastmod>2025-01-21T20:13:25.432Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/instructors</loc><lastmod>2025-01-21T20:13:25.432Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/login</loc><lastmod>2025-01-21T20:13:25.432Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/pdf-viewer</loc><lastmod>2025-01-21T20:13:25.433Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/signup</loc><lastmod>2025-01-21T20:13:25.433Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app</loc><lastmod>2025-01-21T20:13:25.433Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://kalanden.vercel.app/subscription</loc><lastmod>2025-01-21T20:13:25.433Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+</urlset>

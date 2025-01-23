@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://kalanden.vercel.app
+
+# Sitemaps
+Sitemap: https://kalanden.vercel.app/sitemap.xml

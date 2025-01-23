@@ -116,13 +116,14 @@ export default async function CoursesPage() {
   let courses: Course[] = []
 
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION_ID, [Query.limit(100)])
+    const response = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION_ID, [Query.limit(500)])
     courses = response.documents as unknown as Course[]
   } catch (error) {
     console.error("Error fetching courses:", error)
   }
 
   const allCourses = [...courses, ...placeholderCourses]
+  // console.log("All courses to display:", allCourses);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>

@@ -82,31 +82,48 @@ const PopularInstructorsSection = () => {
     fetchInstructors();
   }, []);
 
+  function generateRandomColor(text: string): string {
+    const hash = [...text].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const colors = ['#FFB6C1', '#ADD8E6', '#FFD700', '#98FB98', '#FF6347', '#40E0D0'];
+    return colors[hash % colors.length];
+  }
+  
+
   return (
     <section className="mb-16 py-8">
       <h2 className="text-3xl font-bold mb-8 text-center">Enseignants populaires</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {popularInstructors.map((instructor) => (
           <div key={instructor.$id} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col items-center">
+          {instructor.profileImageId ? (
             <Image
-              src={instructor.profileImageId ? `/api/images/${instructor.profileImageId}` : '/placeholder.svg?height=100&width=100'}
+              src={`/api/images/${instructor.profileImageId}`}
               alt={instructor.name}
               width={100}
               height={100}
               className="w-24 h-24 object-cover rounded-full mb-4"
             />
-            <h3 className="text-xl font-bold mb-2">{instructor.name}</h3>
-            <p className="text-sm text-gray-600 mb-2">{instructor.location}</p>
-            <p className="text-sm text-gray-600 mb-4">Cours créés: {instructor.coursesCreated}</p>
-            <p className="text-lg font-semibold mb-4">
-              <span className="text-yellow-500">★</span> {instructor.likes} J'aime
-            </p>
-            <div className="flex space-x-4">
-              <Button variant="link" asChild>
-                <Link href={`/instructors/${instructor.$id}`}>Voir le profil</Link>
-              </Button>
+          ) : (
+            <div 
+              className="w-24 h-24 flex items-center justify-center rounded-full mb-4 text-2xl font-bold text-white"
+              style={{ backgroundColor: generateRandomColor(instructor.name) }}
+            >
+              {instructor.name.charAt(0).toUpperCase()}
             </div>
+          )}
+          <h3 className="text-xl font-bold mb-2">{instructor.name}</h3>
+          <p className="text-sm text-gray-600 mb-2">{instructor.location}</p>
+          <p className="text-sm text-gray-600 mb-4">Cours créés: {instructor.coursesCreated}</p>
+          <p className="text-lg font-semibold mb-4">
+            <span className="text-yellow-500">★</span> {instructor.likes} J'aime
+          </p>
+          <div className="flex space-x-4">
+            <Button variant="link" asChild>
+              <Link href={`/instructors/${instructor.$id}`}>Voir le profil</Link>
+            </Button>
           </div>
+        </div>
+        
         ))}
       </div>
       {/* Button to view more instructors */}
