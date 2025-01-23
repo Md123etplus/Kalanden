@@ -1,57 +1,58 @@
-import React, { Suspense } from 'react'
-import { Header } from '@/components/header'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import Image from 'next/image'
-import { EducationalIllustration, SmallAfricanStudentsSvg } from '@/components/illustrations'
-import PopularInstructorsSection from '@/components/PopularInstructorsSection'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
+import React, { Suspense } from "react"
+import { Header } from "@/components/header"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import Image from "next/image"
+import { EducationalIllustration, SmallAfricanStudentsSvg } from "@/components/illustrations"
+import PopularInstructorsSection from "@/components/PopularInstructorsSection"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { databases, DATABASE_ID, COURSES_COLLECTION_ID, USERS_COLLECTION_ID, INSTRUCTOR_RATINGS_COLLECTION_ID } from '@/lib/appwrite'
-import { Query } from 'appwrite'
-import { getFilePreview, BUCKET_ID, IMAGE_ID } from '@/lib/appwrite'
-import LoadingAnimation from '@/components/LoadingAnimation'
-import ErrorMessage from '@/components/ErrorMessage'
-import OfflineMessage from '@/components/OfflineMessage'
+import {
+  databases,
+  DATABASE_ID,
+  COURSES_COLLECTION_ID,
+  USERS_COLLECTION_ID,
+  INSTRUCTOR_RATINGS_COLLECTION_ID,
+} from "@/lib/appwrite"
+import { Query } from "appwrite"
+import { getFilePreview, BUCKET_ID, IMAGE_ID } from "@/lib/appwrite"
+import LoadingAnimation from "@/components/LoadingAnimation"
+import ErrorMessage from "@/components/ErrorMessage"
+import OfflineMessage from "@/components/OfflineMessage"
+import { InstallPopup } from "@/components/InstallPopup"
 
 interface Course {
-  $id: string;
-  title: string;
-  description: string;
-  level: string;
-  image?: string;
-  price: number;
-  enrolledStudents?: number;
-  imageFileId?: string;
+  $id: string
+  title: string
+  description: string
+  level: string
+  image?: string
+  price: number
+  enrolledStudents?: number
+  imageFileId?: string
 }
 
 interface Instructor {
-  $id: string;
-  name: string;
-  location: string;
-  profileImageId?: string;
-  likes: number;
-  coursesCreated: number;
+  $id: string
+  name: string
+  location: string
+  profileImageId?: string
+  likes: number
+  coursesCreated: number
 }
 
 // Appwrite file IDs for the section images
-const STUDENT_IMAGE_ID = '677dc861000e70ec2a15'
-const INSTRUCTOR_IMAGE_ID = '67674c1200010784cf7a'
-const PARENT_IMAGE_ID = '6771faf700129f3f59ff'
+const STUDENT_IMAGE_ID = "677dc861000e70ec2a15"
+const INSTRUCTOR_IMAGE_ID = "67674c1200010784cf7a"
+const PARENT_IMAGE_ID = "6771faf700129f3f59ff"
 const HERO_IMAGE_ID = IMAGE_ID
-
 
 const fetchData = async () => {
   let popularCourses: Course[] = []
-  let studentImageUrl = '/placeholder.svg?height=150&width=200'
-  let instructorImageUrl = '/placeholder.svg?height=150&width=200'
-  let parentImageUrl = '/placeholder.svg?height=150&width=200'
-  let heroImageUrl = '/placeholder.svg?height=300&width=400'
+  let studentImageUrl = "/placeholder.svg?height=150&width=200"
+  let instructorImageUrl = "/placeholder.svg?height=150&width=200"
+  let parentImageUrl = "/placeholder.svg?height=150&width=200"
+  let heroImageUrl = "/placeholder.svg?height=300&width=400"
 
   try {
     // Fetch section images
@@ -59,100 +60,106 @@ const fetchData = async () => {
       getFilePreview(BUCKET_ID, HERO_IMAGE_ID),
       getFilePreview(BUCKET_ID, STUDENT_IMAGE_ID),
       getFilePreview(BUCKET_ID, INSTRUCTOR_IMAGE_ID),
-      getFilePreview(BUCKET_ID, PARENT_IMAGE_ID)
-    ]);
+      getFilePreview(BUCKET_ID, PARENT_IMAGE_ID),
+    ])
 
-    heroImageUrl = heroImage || heroImageUrl;
-    studentImageUrl = studentImage || studentImageUrl;
-    instructorImageUrl = instructorImage || instructorImageUrl;
-    parentImageUrl = parentImage || parentImageUrl;
+    heroImageUrl = heroImage || heroImageUrl
+    studentImageUrl = studentImage || studentImageUrl
+    instructorImageUrl = instructorImage || instructorImageUrl
+    parentImageUrl = parentImage || parentImageUrl
 
     // Fetch popular courses
-    const response = await databases.listDocuments(
-      DATABASE_ID,
-      COURSES_COLLECTION_ID,
-      [
-        Query.orderDesc('enrolledStudents'),
-        Query.limit(3)
-      ]
-    )
+    const response = await databases.listDocuments(DATABASE_ID, COURSES_COLLECTION_ID, [
+      Query.orderDesc("enrolledStudents"),
+      Query.limit(3),
+    ])
     popularCourses = response.documents as unknown as Course[]
 
     // Fetch image URLs for courses
-    popularCourses = await Promise.all(popularCourses.map(async (course) => {
-      if (course.imageFileId) {
-        try {
-          const courseImageUrl = await getFilePreview(BUCKET_ID, course.imageFileId);
-          return { ...course, image: courseImageUrl };
-        } catch (error) {
-          console.error(`Error fetching image for course ${course.$id}:`, error);
-          return course;
+    popularCourses = await Promise.all(
+      popularCourses.map(async (course) => {
+        if (course.imageFileId) {
+          try {
+            const courseImageUrl = await getFilePreview(BUCKET_ID, course.imageFileId)
+            return { ...course, image: courseImageUrl }
+          } catch (error) {
+            console.error(`Error fetching image for course ${course.$id}:`, error)
+            return course
+          }
         }
-      }
-      return course;
-    }));
+        return course
+      }),
+    )
 
-    return { popularCourses, heroImageUrl, studentImageUrl, instructorImageUrl, parentImageUrl };
+    return { popularCourses, heroImageUrl, studentImageUrl, instructorImageUrl, parentImageUrl }
   } catch (error) {
-    console.error('Error fetching data:', error)
-    throw error;
+    console.error("Error fetching data:", error)
+    throw error
   }
 }
 
 const HomeContent = async () => {
-  const { popularCourses, heroImageUrl, studentImageUrl, instructorImageUrl, parentImageUrl } = await fetchData();
+  const { popularCourses, heroImageUrl, studentImageUrl, instructorImageUrl, parentImageUrl } = await fetchData()
 
   function generateRandomColor(text: string): string {
-    const hash = [...text].reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const colors = ['#FFA07A', '#20B2AA', '#FF69B4', '#87CEEB', '#DDA0DD', '#FFD700'];
-    return colors[hash % colors.length];
+    const hash = [...text].reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    const colors = ["#FFA07A", "#20B2AA", "#FF69B4", "#87CEEB", "#DDA0DD", "#FFD700"]
+    return colors[hash % colors.length]
   }
-  
 
   return (
     <>
       {/* Hero section */}
       <section className="flex flex-col md:flex-row items-center justify-center mb-16 px-4 md:px-12">
         <div className="md:w-1/2 mb-9 md:mb-0 md:order-2 flex justify-center">
-          <Image 
-            src={heroImageUrl || "/placeholder.svg"} 
-            alt="Élèves maliens" 
-            width={400} 
-            height={300} 
+          <Image
+            src={heroImageUrl || "/placeholder.svg"}
+            alt="Élèves maliens"
+            width={400}
+            height={300}
             className="rounded-lg object-cover"
           />
         </div>
         <div className="md:w-1/2 md:order-1 md:pr-8 flex flex-col items-center md:items-start text-center md:text-left">
           <h1 className="text-4xl font-bold mb-4">Bienvenue sur Kalandén</h1>
           <p className="text-xl mb-8">
-            La plateforme éducative en ligne qui révolutionne l'apprentissage au Mali.
-            Accédez à des ressources pédagogiques de qualité, où que vous soyez, quand vous le souhaitez, en toute simplicité.
+            La plateforme éducative en ligne qui révolutionne l'apprentissage au Mali. Accédez à des ressources
+            pédagogiques de qualité, où que vous soyez, quand vous le souhaitez, en toute simplicité.
           </p>
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
             <Link href="/courses">
-              <Button size="lg" className="w-full sm:w-auto">Commencer à apprendre</Button>
+              <Button size="lg" className="w-full sm:w-auto">
+                Commencer à apprendre
+              </Button>
             </Link>
             <Link href="/subscription">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">Donner des cours</Button>
+              <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                Donner des cours
+              </Button>
             </Link>
           </div>
         </div>
       </section>
 
+      {/* Install popup */}
+      <InstallPopup />
+
       {/* User types section */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 py-8">
         <div className="bg-primary/10 p-8 rounded-lg flex flex-col h-full">
           <div className="w-full h-40 mb-4 rounded-lg overflow-hidden">
-            <Image 
+            <Image
               src={studentImageUrl || "/placeholder.svg"}
-              alt="Étudiants" 
-              width={200} 
-              height={150} 
+              alt="Étudiants"
+              width={200}
+              height={150}
               className="w-full h-full object-cover"
             />
           </div>
           <h2 className="text-2xl font-semibold mb-4">Pour les étudiants</h2>
-          <p className="mb-4 flex-grow">Accédez à une variété de cours et de ressources pour améliorer votre éducation.</p>
+          <p className="mb-4 flex-grow">
+            Accédez à une variété de cours et de ressources pour améliorer votre éducation.
+          </p>
           <div className="mt-auto">
             <Link href="/courses">
               <Button className="w-full">Explorer les cours</Button>
@@ -161,37 +168,45 @@ const HomeContent = async () => {
         </div>
         <div className="bg-secondary/10 p-8 rounded-lg flex flex-col h-full">
           <div className="w-full h-40 mb-4 rounded-lg overflow-hidden">
-            <Image 
+            <Image
               src={instructorImageUrl || "/placeholder.svg"}
-              alt="Instructeurs" 
-              width={200} 
-              height={150} 
+              alt="Instructeurs"
+              width={200}
+              height={150}
               className="w-full h-full object-cover"
             />
           </div>
           <h2 className="text-2xl font-semibold mb-4">Pour les instructeurs</h2>
-          <p className="mb-4 flex-grow">Partagez vos connaissances, enseignez aux étudiants maliens et gagnez un revenu supplémentaire.</p>
+          <p className="mb-4 flex-grow">
+            Partagez vos connaissances, enseignez aux étudiants maliens et gagnez un revenu supplémentaire.
+          </p>
           <div className="mt-auto">
             <Link href="/subscription">
-              <Button variant="secondary" className="w-full">Devenir instructeur</Button>
+              <Button variant="secondary" className="w-full">
+                Devenir instructeur
+              </Button>
             </Link>
           </div>
         </div>
         <div className="bg-accent/10 p-8 rounded-lg flex flex-col h-full">
           <div className="w-full h-40 mb-4 rounded-lg overflow-hidden">
-            <Image 
+            <Image
               src={parentImageUrl || "/placeholder.svg"}
-              alt="Parents" 
-              width={200} 
-              height={150} 
+              alt="Parents"
+              width={200}
+              height={150}
               className="w-full h-full object-cover"
             />
           </div>
           <h2 className="text-2xl font-semibold mb-4">Pour les parents</h2>
-          <p className="mb-4 flex-grow">Suivez les performances de vos enfants et participez activement à leur éducation.</p>
+          <p className="mb-4 flex-grow">
+            Suivez les performances de vos enfants et participez activement à leur éducation.
+          </p>
           <div className="mt-auto">
             <Link href="/dashboard/parent">
-              <Button variant="outline" className="w-full">Tableau de bord parent</Button>
+              <Button variant="outline" className="w-full">
+                Tableau de bord parent
+              </Button>
             </Link>
           </div>
         </div>
@@ -201,44 +216,41 @@ const HomeContent = async () => {
       <section className="mb-16 py-8">
         <h2 className="text-3xl font-bold mb-8 text-center">Cours populaires</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-  {popularCourses.map((course) => (
-    <Card key={course.$id}>
-      <CardHeader>
-        {course.image ? (
-          <Image
-            src={course.image}
-            alt={course.title}
-            width={200}
-            height={100}
-            className="w-full h-40 object-cover rounded-t-lg"
-          />
-        ) : (
-          <div 
-            className="w-full h-40 flex items-center justify-center rounded-t-lg text-3xl font-bold text-white"
-            style={{ backgroundColor: generateRandomColor(course.title) }}
-          >
-            {course.title.charAt(0).toUpperCase()}
-          </div>
-        )}
-      </CardHeader>
-      <CardContent>
-        <CardTitle>{course.title}</CardTitle>
-        <CardDescription>{course.description}</CardDescription>
-        <p className="mt-2">Niveau: {course.level}</p>
-        <p className="mt-2 font-bold">
-          {course.price === 0 ? 'Gratuit' : `Prix: ${course.price} FCFA`}
-        </p>
-        <p className="mt-2">Étudiants inscrits: {course.enrolledStudents || 0}</p>
-        <Link href={`/courses/${course.$id}`} className="mt-4 inline-block">
-          <Button>{course.price === 0 ? 'Commencer' : 'Voir le cours'}</Button>
-        </Link>
-      </CardContent>
-    </Card>
-  ))}
-</div>
-
+          {popularCourses.map((course) => (
+            <Card key={course.$id}>
+              <CardHeader>
+                {course.image ? (
+                  <Image
+                    src={course.image || "/placeholder.svg"}
+                    alt={course.title}
+                    width={200}
+                    height={100}
+                    className="w-full h-40 object-cover rounded-t-lg"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-40 flex items-center justify-center rounded-t-lg text-3xl font-bold text-white"
+                    style={{ backgroundColor: generateRandomColor(course.title) }}
+                  >
+                    {course.title.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                <CardTitle>{course.title}</CardTitle>
+                <CardDescription>{course.description}</CardDescription>
+                <p className="mt-2">Niveau: {course.level}</p>
+                <p className="mt-2 font-bold">{course.price === 0 ? "Gratuit" : `Prix: ${course.price} FCFA`}</p>
+                <p className="mt-2">Étudiants inscrits: {course.enrolledStudents || 0}</p>
+                <Link href={`/courses/${course.$id}`} className="mt-4 inline-block">
+                  <Button>{course.price === 0 ? "Commencer" : "Voir le cours"}</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </section>
-      
+
       {/* Popular instructors section */}
       <PopularInstructorsSection />
 
@@ -249,7 +261,9 @@ const HomeContent = async () => {
         </div>
         <div className="md:w-1/2 md:order-1">
           <h2 className="text-3xl font-bold mb-4">Notre mission</h2>
-          <p className="text-xl mb-8">Offrir une éducation de qualité à tous les Maliens, où qu'ils soient et quelles que soient les conditions.</p>
+          <p className="text-xl mb-8">
+            Offrir une éducation de qualité à tous les Maliens, où qu'ils soient et quelles que soient les conditions.
+          </p>
         </div>
       </section>
 
@@ -312,10 +326,26 @@ export default function Home() {
             <div>
               <h3 className="text-lg font-semibold mb-4">Liens rapides</h3>
               <ul className="space-y-2">
-                <li><Link href="/courses" className="hover:underline">Cours</Link></li>
-                <li><Link href="/subscription" className="hover:underline">Devenir instructeur</Link></li>
-                <li><Link href="/about" className="hover:underline">À propos</Link></li>
-                <li><Link href="/contact" className="hover:underline">Contact</Link></li>
+                <li>
+                  <Link href="/courses" className="hover:underline">
+                    Cours
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/subscription" className="hover:underline">
+                    Devenir instructeur
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/about" className="hover:underline">
+                    À propos
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="hover:underline">
+                    Contact
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
