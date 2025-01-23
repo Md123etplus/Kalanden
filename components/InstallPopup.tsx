@@ -5,6 +5,10 @@ import { X } from "lucide-react"
 import { Button } from "./ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 
+const isDesktop = () => {
+  return !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
 export function InstallPopup() {
   const [isVisible, setIsVisible] = useState(false)
   const [isDismissed, setIsDismissed] = useState(false)
@@ -53,6 +57,10 @@ export function InstallPopup() {
       if (outcome === "accepted") {
         setDeferredPrompt(null)
       }
+    } else if (isDesktop()) {
+      alert(
+        "Pour installer l'application sur votre ordinateur, utilisez le bouton d'installation dans la barre d'adresse de votre navigateur.",
+      )
     } else {
       setShowInstructions(true)
     }
@@ -77,18 +85,27 @@ export function InstallPopup() {
             <DialogTitle>Comment installer Kalandén</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <h4 className="font-semibold mb-2">Sur Android :</h4>
-            <ol className="list-decimal list-inside mb-4">
-              <li>Appuyez sur les trois points en haut à droite de votre navigateur</li>
-              <li>Sélectionnez "Ajouter à l'écran d'accueil"</li>
-              <li>Confirmez l'ajout</li>
-            </ol>
-            <h4 className="font-semibold mb-2">Sur iOS :</h4>
-            <ol className="list-decimal list-inside">
-              <li>Appuyez sur l'icône de partage en bas de votre navigateur</li>
-              <li>Faites défiler et sélectionnez "Sur l'écran d'accueil"</li>
-              <li>Appuyez sur "Ajouter" en haut à droite</li>
-            </ol>
+            {isDesktop() ? (
+              <p>
+                Pour installer l'application sur votre ordinateur, utilisez le bouton d'installation dans la barre
+                d'adresse de votre navigateur.
+              </p>
+            ) : (
+              <>
+                <h4 className="font-semibold mb-2">Sur Android :</h4>
+                <ol className="list-decimal list-inside mb-4">
+                  <li>Appuyez sur les trois points en haut à droite de votre navigateur</li>
+                  <li>Sélectionnez "Ajouter à l'écran d'accueil"</li>
+                  <li>Confirmez l'ajout</li>
+                </ol>
+                <h4 className="font-semibold mb-2">Sur iOS :</h4>
+                <ol className="list-decimal list-inside">
+                  <li>Appuyez sur l'icône de partage en bas de votre navigateur</li>
+                  <li>Faites défiler et sélectionnez "Sur l'écran d'accueil"</li>
+                  <li>Appuyez sur "Ajouter" en haut à droite</li>
+                </ol>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
