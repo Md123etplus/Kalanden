@@ -7,14 +7,12 @@ import { Button } from "./ui/button"
 export function InstallPopup() {
   const [isVisible, setIsVisible] = useState(false)
   const [isDismissed, setIsDismissed] = useState(false)
-  const [isInstallable, setIsInstallable] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e)
-      setIsInstallable(true)
     }
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
@@ -47,14 +45,16 @@ export function InstallPopup() {
   }
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return
-
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === "accepted") {
-      setIsInstallable(false)
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      if (outcome === "accepted") {
+        setDeferredPrompt(null)
+      }
+    } else {
+      // Fallback for devices that don't support the install prompt
+      alert("Pour installer l'application, ajoutez cette page à votre écran d'accueil.")
     }
-    setDeferredPrompt(null)
   }
 
   if (!isVisible) return null
@@ -66,11 +66,9 @@ export function InstallPopup() {
       </Button>
       <h3 className="text-lg font-semibold mb-2">Installez Kalandén</h3>
       <p className="mb-4">Profitez de notre application pour une meilleure expérience !</p>
-      {isInstallable && (
-        <Button onClick={handleInstall} className="w-full">
-          Installer l'application
-        </Button>
-      )}
+      <Button onClick={handleInstall} className="w-full">
+        Installer l'application
+      </Button>
     </div>
   )
 }
