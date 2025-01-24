@@ -345,6 +345,7 @@ export default function CreateCoursePage() {
                       <SelectItem value="Géographie">Géographie</SelectItem>
                       <SelectItem value="Français">Français</SelectItem>
                       <SelectItem value="Anglais">Anglais</SelectItem>
+                      <SelectItem value="Arabe">Arabe</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
