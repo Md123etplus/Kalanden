@@ -79,7 +79,8 @@ export default function SignUpPage() {
       const user = await account.create(ID.unique(), formData.email, formData.password, formData.name)
 
       // Create user document in database
-      await databases.createDocument(DATABASE_ID, USERS_COLLECTION_ID, user.$id, {
+      const shortId = ID.unique().substring(0, 10) // Generate a short unique ID
+      await databases.createDocument(DATABASE_ID, USERS_COLLECTION_ID, shortId, {
         email: formData.email,
         name: formData.name,
         role: formData.role,
@@ -96,7 +97,7 @@ export default function SignUpPage() {
       }`
 
       await databases.createDocument(DATABASE_ID, MESSAGES_COLLECTION_ID, ID.unique(), {
-        userId: user.$id,
+        userId: shortId,
         message: welcomeMessage,
         read: false,
         createdAt: new Date().toISOString(),
@@ -199,10 +200,7 @@ export default function SignUpPage() {
           </div>
           <div>
             <Label htmlFor="role">Rôle</Label>
-            <Select
-              value={formData.role}
-              onValueChange={handleRoleChange}
-            >
+            <Select value={formData.role} onValueChange={handleRoleChange}>
               <SelectTrigger id="role" className={errors.role ? "border-red-500" : ""}>
                 <SelectValue placeholder="Sélectionnez un rôle" />
               </SelectTrigger>
