@@ -6,4 +6,4 @@ Allow: /
 Host: https://kalanden.vercel.app
 
 # Sitemaps
-Sitemap: https://kalanden.vercel.app/sitemap.xml
+Sitemap: https://kalanden.vercel.app/sitemap-0.xml
