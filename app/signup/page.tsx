@@ -80,6 +80,7 @@ export default function SignUpPage() {
 
       // Create user document indatabase
       const shortId =generateShortId(user.$id) // Generate a short unique ID
+      // console.log("short  ID b4 creation ", shortId)
       await databases.createDocument(DATABASE_ID, USERS_COLLECTION_ID, shortId, {
         // appwriteId: user.$id,
         email: formData.email,

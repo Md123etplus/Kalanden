@@ -58,7 +58,7 @@ export default function LoginPage() {
   
       // Generate the same short ID used during signup
       const shortId = generateShortId(user.$id)
-      console.log("Short ID from login:", shortId)
+      // console.log("Short ID from login:", shortId)
   
       // Fetch user document using shortId
       const userData = await databases.getDocument(DATABASE_ID, USERS_COLLECTION_ID, shortId)
@@ -72,7 +72,7 @@ export default function LoginPage() {
       })
   
       // Redirect based on user role
-      console.log("User Data" , userData)
+      // console.log("User Data" , userData)
       switch (userData.role) {
         case "student":
           router.push("/dashboard/student")

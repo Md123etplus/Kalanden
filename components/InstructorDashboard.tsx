@@ -35,7 +35,7 @@ export function InstructorDashboard() {
     setIsLoading(true)
     try {
       const user = await getCurrentUser()
-      console.log("uuser from getCurrentUser of InstructorDash component lib/appwrite", user)
+      // console.log("uuser from getCurrentUser of InstructorDash component lib/appwrite", user)
       if (!user) {
         throw new Error('Current user not found')
       }
