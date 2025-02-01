@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { account, databases, DATABASE_ID, USERS_COLLECTION_ID, type User } from "@/lib/appwrite"
+import { account, databases, DATABASE_ID, USERS_COLLECTION_ID, type User, generateShortId } from "@/lib/appwrite"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -57,7 +57,7 @@ export default function LoginPage() {
       const user = await account.get() // Get Appwrite user details
   
       // Generate the same short ID used during signup
-      const shortId = user.$id.substring(0, 10)
+      const shortId = generateShortId(user.$id)
       console.log("Short ID from login:", shortId)
   
       // Fetch user document using shortId

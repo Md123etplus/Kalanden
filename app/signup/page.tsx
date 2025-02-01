@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { account, databases, ID, DATABASE_ID, USERS_COLLECTION_ID, MESSAGES_COLLECTION_ID } from "@/lib/appwrite"
+import { account, databases, ID, DATABASE_ID, USERS_COLLECTION_ID, MESSAGES_COLLECTION_ID, generateShortId } from "@/lib/appwrite"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, EyeOff } from "lucide-react"
 
@@ -79,7 +79,7 @@ export default function SignUpPage() {
       const user = await account.create(ID.unique(), formData.email, formData.password, formData.name)
 
       // Create user document indatabase
-      const shortId = user.$id.substring(0, 10) // Generate a short unique ID
+      const shortId =generateShortId(user.$id) // Generate a short unique ID
       await databases.createDocument(DATABASE_ID, USERS_COLLECTION_ID, shortId, {
         // appwriteId: user.$id,
         email: formData.email,

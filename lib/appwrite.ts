@@ -1,4 +1,5 @@
 import { Client, Account, Databases, Storage } from 'appwrite';
+import { createHash } from 'crypto';
 
 const client = new Client();
 
@@ -36,14 +37,21 @@ export interface User {
   createdAt: string;
   updatedAt: string;
 }
-
+export function generateShortId(id: string): string {
+  // Create a SHA-256 hash from the full ID
+  const hash = createHash('sha256');
+  hash.update(id);
+  
+  // Get the first 10 characters of the hash
+  return hash.digest('hex').substring(0, 10);
+}
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const session = await account.get();
     const user = await databases.getDocument(
       DATABASE_ID,
       USERS_COLLECTION_ID,
-      session.$id.substring(0,10)
+      generateShortId(session.$id)
     );
     return user as unknown as User;
   } catch (error) {
