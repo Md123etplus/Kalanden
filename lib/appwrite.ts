@@ -43,7 +43,7 @@ export async function getCurrentUser(): Promise<User | null> {
     const user = await databases.getDocument(
       DATABASE_ID,
       USERS_COLLECTION_ID,
-      session.$id
+      session.$id.substring(0,10)
     );
     return user as unknown as User;
   } catch (error) {

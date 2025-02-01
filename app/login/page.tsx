@@ -54,36 +54,37 @@ export default function LoginPage() {
     try {
       setLoginError(null) // Clear any previous error
       await account.createEmailPasswordSession(email, password)
-      const user = await account.get()
-
-      const userDetails = await databases.listDocuments(DATABASE_ID, USERS_COLLECTION_ID, [Query.equal("email", email)])
-
-      if (userDetails.documents.length > 0) {
-        const userData = userDetails.documents[0] as unknown as User
-        const fullUserData = { ...user, ...userData }
-        document.cookie = `session=${user.$id}; path=/; max-age=86400; secure; samesite=strict`
-        document.cookie = `user=${encodeURIComponent(JSON.stringify(fullUserData))}; path=/; max-age=86400; secure; samesite=strict`
-        toast({
-          title: "Connexion réussie",
-          description: "Bienvenue sur Kalandén!",
-        })
-
-        // Redirect based on user role
-        switch (userData.role) {
-          case "student":
-            router.push("/dashboard/student")
-            break
-          case "instructor":
-            router.push("/dashboard/instructor")
-            break
-          case "parent":
-            router.push("/dashboard/parent")
-            break
-          default:
-            router.push("/dashboard")
-        }
-      } else {
-        throw new Error("User details not found in the database")
+      const user = await account.get() // Get Appwrite user details
+  
+      // Generate the same short ID used during signup
+      const shortId = user.$id.substring(0, 10)
+      console.log("Short ID from login:", shortId)
+  
+      // Fetch user document using shortId
+      const userData = await databases.getDocument(DATABASE_ID, USERS_COLLECTION_ID, shortId)
+  
+      document.cookie = `session=${user.$id}; path=/; max-age=86400; secure; samesite=strict`
+      document.cookie = `user=${encodeURIComponent(JSON.stringify(userData))}; path=/; max-age=86400; secure; samesite=strict`
+  
+      toast({
+        title: "Connexion réussie",
+        description: "Bienvenue sur Kalandén!",
+      })
+  
+      // Redirect based on user role
+      console.log("User Data" , userData)
+      switch (userData.role) {
+        case "student":
+          router.push("/dashboard/student")
+          break
+        case "instructor":
+          router.push("/dashboard/instructor")
+          break
+        case "parent":
+          router.push("/dashboard/parent")
+          break
+        default:
+          router.push("/dashboard")
       }
     } catch (error) {
       console.error("Login error:", error)
@@ -91,6 +92,8 @@ export default function LoginPage() {
       setIsSubmitting(false)
     }
   }
+  
+  
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

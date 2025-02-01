@@ -78,9 +78,10 @@ export default function SignUpPage() {
       // Create user account
       const user = await account.create(ID.unique(), formData.email, formData.password, formData.name)
 
-      // Create user document in database
-      const shortId = ID.unique().substring(0, 10) // Generate a short unique ID
+      // Create user document indatabase
+      const shortId = user.$id.substring(0, 10) // Generate a short unique ID
       await databases.createDocument(DATABASE_ID, USERS_COLLECTION_ID, shortId, {
+        // appwriteId: user.$id,
         email: formData.email,
         name: formData.name,
         role: formData.role,

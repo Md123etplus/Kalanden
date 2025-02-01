@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { databases, DATABASE_ID, COURSES_COLLECTION_ID, TRANSACTIONS_COLLECTION_ID } from '@/lib/appwrite'
 import { Query } from 'appwrite'
 import { useToast } from '@/components/use-toast'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/appwrite'
 import { InstructorWithdrawal } from '@/components/InstructorWithdrawal'
 import { Course } from '@/lib/course'
 
@@ -35,6 +35,7 @@ export function InstructorDashboard() {
     setIsLoading(true)
     try {
       const user = await getCurrentUser()
+      console.log("uuser from getCurrentUser of InstructorDash component lib/appwrite", user)
       if (!user) {
         throw new Error('Current user not found')
       }
