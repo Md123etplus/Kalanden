@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
@@ -8,9 +8,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { account, databases, ID, DATABASE_ID, USERS_COLLECTION_ID, MESSAGES_COLLECTION_ID, generateShortId } from "@/lib/appwrite"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  account,
+  databases,
+  ID,
+  DATABASE_ID,
+  USERS_COLLECTION_ID,
+  MESSAGES_COLLECTION_ID,
+  generateShortId,
+} from "@/lib/appwrite"
 import { Eye, EyeOff } from "lucide-react"
+import { getUserLocation } from "@/lib/utils"
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -20,6 +28,7 @@ export default function SignUpPage() {
     confirmPassword: "",
     role: "",
     phoneNumber: "",
+    location: "",
   })
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -27,6 +36,14 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
+
+  useEffect(() => {
+    const fetchLocation = async () => {
+      const location = await getUserLocation()
+      setFormData((prev) => ({ ...prev, location }))
+    }
+    fetchLocation()
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -61,6 +78,7 @@ export default function SignUpPage() {
     if (!formData.phoneNumber) newErrors.phoneNumber = "Le numéro de téléphone est requis"
     else if (!/^\+?[0-9]{8,14}$/.test(formData.phoneNumber))
       newErrors.phoneNumber = "Le numéro de téléphone n'est pas valide"
+    if (!formData.location) newErrors.location = "La localisation est requise"
     return newErrors
   }
 
@@ -78,15 +96,14 @@ export default function SignUpPage() {
       // Create user account
       const user = await account.create(ID.unique(), formData.email, formData.password, formData.name)
 
-      // Create user document indatabase
-      const shortId =generateShortId(user.$id) // Generate a short unique ID
-      // console.log("short  ID b4 creation ", shortId)
+      // Create user document in database
+      const shortId = generateShortId(user.$id)
       await databases.createDocument(DATABASE_ID, USERS_COLLECTION_ID, shortId, {
-        // appwriteId: user.$id,
         email: formData.email,
         name: formData.name,
         role: formData.role,
         phoneNumber: formData.phoneNumber,
+        location: formData.location,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
@@ -227,6 +244,18 @@ export default function SignUpPage() {
             />
             {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
           </div>
+          <div>
+            <Label htmlFor="location">Localisation</Label>
+            <Input
+              id="location"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              required
+              className={errors.location ? "border-red-500" : ""}
+            />
+            {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
+          </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Inscription en cours..." : "S'inscrire"}
           </Button>
@@ -235,3 +264,4 @@ export default function SignUpPage() {
     </div>
   )
 }
+
