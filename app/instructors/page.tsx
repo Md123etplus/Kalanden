@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Image from "next/image"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from "next/link"
 import {
   databases,
@@ -36,6 +36,15 @@ interface Instructor {
   likes: number
   email: string
   phoneNumber: string
+}
+
+function generateRandomColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const hue = Math.abs(hash % 360)
+  return `hsl(${hue}, 70%, 60%)`
 }
 
 export default function InstructorsPage() {
@@ -153,17 +162,19 @@ export default function InstructorsPage() {
           {filteredInstructors.map((instructor) => (
             <Card key={instructor.$id}>
               <CardHeader>
-                <Image
-                  src={
-                    instructor.profileImageId
-                      ? `/api/images/${instructor.profileImageId}`
-                      : "/placeholder.svg?height=100&width=100"
-                  }
-                  alt={instructor.name}
-                  width={100}
-                  height={100}
-                  className="rounded-full mx-auto"
-                />
+                <Avatar className="w-24 h-24 mx-auto mb-4">
+                  {instructor.profileImageId ? (
+                    <AvatarImage src={`/api/images/${instructor.profileImageId}`} alt={instructor.name} />
+                  ) : (
+                    <AvatarFallback style={{ backgroundColor: generateRandomColor(instructor.name), color: "#ffffff" }}>
+                      {instructor.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
               </CardHeader>
               <CardContent className="text-center">
                 <h2 className="text-xl font-bold mb-2">{instructor.name}</h2>
